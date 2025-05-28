@@ -5,7 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4e730ac9-0a4c-43b5-8fc2-bd2be93d917f" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/app/(root)/(tabs)/explore.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/(root)/(tabs)/index.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/(root)/(tabs)/profile.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/(root)/(tabs)/test.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/(root)/properties/[id].tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/index.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/sign-in.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/sign-in.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,6 +47,11 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/root/tabs" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -54,7 +66,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1748328860382</updated>
-      <workItem from="1748328861614" duration="4993000" />
+      <workItem from="1748328861614" duration="13796000" />
     </task>
     <servers />
   </component>
