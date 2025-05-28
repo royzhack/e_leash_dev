@@ -9,7 +9,8 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Link href = "/sign-in"> Sign In</Link>
+        <Text className="font-extrabold">Welcome to NUS WasteLess </Text>
+        <Link href = "/sign-in"> Sign In</Link>
         <Link href = "/explore"> Explore</Link>
         <Link href = "/profile"> Profile</Link>
         <Link href = "/properties/1"> Properties</Link>
