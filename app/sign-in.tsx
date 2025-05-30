@@ -6,6 +6,7 @@ const SignIn = () => {
     const handleLogin = async () => {
         const result = await login();
         if (result) {
+            Alert.alert('Success', 'Login was successful' );
             console.log('Login successful');
         } else {
             Alert.alert("Error", "Failed to login");
