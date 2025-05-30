@@ -8,7 +8,7 @@ import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
 export const config = {
     platform : 'com.roy.wasteless',
-    endpoint : process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
+    endpoint : 'https://cloud.appwrite.io/v1',
     projectID: "6837256a001912254094",
 }
 
