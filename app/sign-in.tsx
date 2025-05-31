@@ -2,12 +2,24 @@ import { View, Text, ScrollView, Image, TouchableOpacity , Alert} from 'react-na
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {login} from "@/lib/appwrite";
+import {useGlobalContext} from "@/lib/global-provider";
+import {Redirect} from "expo-router";
+
 const SignIn = () => {
+    const {isLoggedIn ,loading, refetch } = useGlobalContext(); //gets the loading and isLoggedIn booleans refetch function from globalprovider
+    //so that u can check and act accordingly
+
+    if (!loading && isLoggedIn) {
+        return <Redirect href="/" />; //if they done loading and logged in redirect to home page, so signing in again
+        //while being logged in just redirects them to the home page, so they cant sign in again without logging out
+    }
+
     const handleLogin = async () => {
         const result = await login();
         if (result) {
             Alert.alert('Success', 'Login was successful' );
             console.log('Login successful');
+            refetch(); //redirects users to the home page
         } else {
             Alert.alert("Error", "Failed to login");
         }
