@@ -13,25 +13,21 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="main" />
-      </map>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;naa-siuuuu-ff&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "naa-siuuuu-ff"
   }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/royzhack/e_leash_dev.git&quot;,
-    &quot;accountId&quot;: &quot;29a36567-4e82-4b35-aa82-982ff9bee05b&quot;
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/royzhack/e_leash_dev.git",
+    "accountId": "29a36567-4e82-4b35-aa82-982ff9bee05b"
   }
-}</component>
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
 }</component>
@@ -79,7 +75,7 @@
       <workItem from="1748328861614" duration="14740000" />
       <workItem from="1748399756548" duration="61000" />
       <workItem from="1748441406271" duration="5871000" />
-      <workItem from="1748561855340" duration="179000" />
+      <workItem from="1748607085160" duration="2942000" />
     </task>
     <servers />
   </component>

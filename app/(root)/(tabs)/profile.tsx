@@ -11,8 +11,7 @@ export default function Profile() {
                 alignItems: "center",
             }}
         >
-            <Link href = "/test">Test</Link>
-            <Link href = "/explore"> Explore</Link>
+
             <Link href = "/profile"> Profile</Link>
             <Link href = "/properties/1"> Properties</Link>
         </View>
