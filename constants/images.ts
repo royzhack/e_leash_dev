@@ -1,7 +1,7 @@
-import logo from "@/assets/images/icon.png";
+import icon from "@/assets/images/icon.png";
 import splashicon from "@/assets/images/splashicon.png";
 
 export default {
-    logo,
+    icon,
     splashicon
 };
