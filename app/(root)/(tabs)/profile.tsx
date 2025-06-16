@@ -5,7 +5,8 @@ import {
     Text,
     TouchableOpacity,
     View,
-} from "react-native";
+    ImageSourcePropType
+} from "react-native"; //added Image Source Prop Type, but didnt use it
 import { logout } from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
 import { Image } from "react-native";

@@ -1,15 +1,18 @@
 
-import {Avatars,
-    Account ,
-    Client ,
-    OAuthProvider
-} from "react-native-appwrite"
+import {
+    Avatars,
+    Account,
+    Client,
+    OAuthProvider, Databases,
+} from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
 export const config = {
     platform : 'com.roy.wasteless',
     endpoint : 'https://cloud.appwrite.io/v1',
     projectID: "6837256a001912254094",
+    databaseId: '6842a4150011ed4c7211',
+    buffetcollectionID: '6842aa210006eafe1e09'
 }
 
 export const client = new Client()
@@ -21,6 +24,8 @@ client
 
 export const avatar = new Avatars(client)
 export const account = new Account(client)
+export const databases = new Databases(client)
+
 
 export async function login() {
     try {
