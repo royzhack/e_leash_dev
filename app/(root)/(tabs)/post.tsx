@@ -47,28 +47,6 @@ const Post = () => {
    };
 
 
-    const takePicture = async () => {
-       console.log("picture taken");
-       let result = await ImagePicker.launchImageLibraryAsync({
-           allowsEditing: true,
-           quality:1
-       })
-
-      if (!result.canceled) {
-          console.log(result);
-      } else {
-          alert("You did not upload any picture :)");
-      }
-   };
-
-
-    // const handleTimeChange = (event, date, onChange) => { //this does nothing
-    //     setShowTimePicker(Platform.OS === 'ios'); // Keep picker open on iOS
-    //     if (date) {
-    //         //setSelectedTime(date);
-    //         onChange(date); // Update form state
-    //     }
-    // };
 
 
 

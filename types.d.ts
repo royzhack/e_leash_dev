@@ -1,12 +1,13 @@
 interface Buffet {
     $id: string
     $createdAt: string
-    clearedby: string
+    clearedby: Date
     leftover: number
     additionaldetails: string
-    buffetpics: URL
+    buffetpics: string
     nuslocation: NUSLocation
     level: number
+    locationdetails: string
 }
 
 interface NUSLocation {
@@ -15,5 +16,5 @@ interface NUSLocation {
     latitude: number
     longitude: number
     name:string
-    buffets: string
+    buffets: Buffet[]
 }
