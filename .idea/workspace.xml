@@ -5,17 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4e730ac9-0a4c-43b5-8fc2-bd2be93d917f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/app/actions/buffetpostaction.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_30_5_25,_8_01 AM_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_30_5_25__8_01AM__Changes_.xml" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/(root)/(tabs)/getlocation.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(root)/(tabs)/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/(tabs)/_layout.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(root)/(tabs)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/(tabs)/index.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(root)/(tabs)/post.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/(tabs)/post.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(root)/(tabs)/profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/(tabs)/profile.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/databseactions/buffetpostaction.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/picture.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/appwrite.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/appwrite.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/picture.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/postBuffet.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/postBuffet.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/types.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types.d.ts" afterDir="false" />
@@ -78,6 +73,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/(root)/(tabs)" />
       <recent name="$PROJECT_DIR$/app/root/tabs" />
     </key>
   </component>
@@ -104,7 +100,7 @@
       <workItem from="1749599548756" duration="12210000" />
       <workItem from="1749699148033" duration="28531000" />
       <workItem from="1749821073013" duration="11321000" />
-      <workItem from="1750036089844" duration="8409000" />
+      <workItem from="1750036089844" duration="27543000" />
     </task>
     <servers />
   </component>

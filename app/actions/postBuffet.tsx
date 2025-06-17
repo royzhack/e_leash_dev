@@ -1,7 +1,7 @@
 import {databases} from '@/lib/appwrite'
 import {ID} from "react-native-appwrite";
 
-export async function postBuffet(buffetpics:URL, nuslocation: NUSLocation,
+export async function postBuffet(buffetpics:String, nuslocation: NUSLocation,
                                 level: number, leftover: number, clearedby: string,
                                  additionaldetails: string): Promise<Buffet> {
     const newBuffet = {}
@@ -20,7 +20,8 @@ export async function postBuffet(buffetpics:URL, nuslocation: NUSLocation,
         additionaldetails: response.additionaldetails,
         buffetpics: response.buffetpics,
         nuslocation: response.nuslocation,
-        level:response.level
+        level:response.level,
+        locationdetails:response.locationdetails,
     }
     return buffet
 }
