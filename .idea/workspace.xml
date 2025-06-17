@@ -5,20 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4e730ac9-0a4c-43b5-8fc2-bd2be93d917f" name="Changes" comment="">
-
-      <change afterPath="$PROJECT_DIR$/app/(root)/(tabs)/camera.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/PhotoPreviewSection.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(root)/(tabs)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/(tabs)/index.tsx" afterDir="false" />
-
-      <change afterPath="$PROJECT_DIR$/app/(root)/(tabs)/getlocation.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(root)/(tabs)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/(tabs)/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(root)/(tabs)/post.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/(tabs)/post.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/picture.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/postBuffet.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/postBuffet.tsx" afterDir="false" />
-
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -73,7 +59,7 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "configurable.group.appearance",
-    "ts.external.directory.path": "/Users/roysougata/WebstormProjecs/NUS_Wasteless/node_modules/typescript/lib",
+    "ts.external.directory.path": "/Users/nasif/Documents/NUS academics /Orbital/WebstormProjects/second attempt/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -106,7 +92,7 @@
       <workItem from="1749599548756" duration="12210000" />
       <workItem from="1749699148033" duration="28531000" />
       <workItem from="1749821073013" duration="11321000" />
-      <workItem from="1750036089844" duration="27543000" />
+      <workItem from="1750036089844" duration="28416000" />
     </task>
     <servers />
   </component>
