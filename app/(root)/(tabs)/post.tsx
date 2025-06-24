@@ -1,12 +1,14 @@
 import {View, Text, ScrollView, TouchableOpacity, TextInput, Button, Platform, SafeAreaView, Modal, Image} from 'react-native'
-import React, {useState} from 'react'
+import React, {useRef, useState} from 'react'
 import {useForm, Controller} from "react-hook-form" //form saving
 import {Soup} from "lucide-react-native";
 import DateTimePicker from '@react-native-community/datetimepicker' //time
 import {Picker} from '@react-native-picker/picker'; //location
 import Slider from '@react-native-community/slider'; //leftover
+import {postBuffet} from "@/app/actions/postBuffet";
 import * as ImagePicker from "expo-image-picker"
-
+import Camera from '@/app/(root)/(tabs)/camera'
+import {CameraType, CameraView, useCameraPermissions} from "expo-camera";
 
 const Post = () => {
 
@@ -19,11 +21,26 @@ const Post = () => {
             clearedby: new Date()
         }});
 
-    const submit = (data) => {
-      console.log(data)
-  }
+    const submit = async (data) => {
+       console.log(data)
+        try {
+            const result = await postBuffet(
+                data.level,
+                data.locationdetails,
+                data.clearedby,
+                data.leftover,
+                data.additionaldetails
+            );
+            console.log("Buffet posted:", result);
+            // Optionally, show a success message, reset the form, or navigate
+        } catch (error) {
+            console.error("Failed to post buffet:", error);
+            // Optionally, show an error message to the user
+        }
+    };
 
-  const [showTimePicker, setShowTimePicker] = useState(false);
+
+    const [showTimePicker, setShowTimePicker] = useState(false);
   //const [selectedTime, setSelectedTime] = useState(new Date());
     // this is unnecessary as react hook form already takes care of use state
 
@@ -48,8 +65,6 @@ const Post = () => {
 
 
 
-
-
     return (
         <SafeAreaView className="h-full bg-white"> {/*first wrap everything in a safe area view*/ }
             <ScrollView showsVerticalScrollIndicator={true} contentContainerClassName="pb-32 px-7"> {/*scrollview*/}
@@ -61,31 +76,9 @@ const Post = () => {
 
                 {/*Pictures of buffet*/}
                 <View>
-                    <Controller
-                        name="buffetpics"
-                        control={control}
-                        render={({ field: { onChange, value } }) => (
-                            <TouchableOpacity
-                                onPress={async () => {
-                                    let result = await ImagePicker.launchImageLibraryAsync({
-                                        allowsEditing: true,
-                                        quality: 1,
-                                    });
-                                    if (!result.canceled) {
-                                        onChange(result.assets[0].uri);
-                                    } else {
-                                        alert("You did not upload any picture :)");
-                                    }
-                                }}
-                                className="h-40 items-center rounded border border-gray-300 shadow-md"
-                            >
-                                <Text className="text-xl font-rubik-bold">Upload a picture of your buffet</Text>
-                                {value && (
-                                    <Image className="h-full" source={{ uri: value }} />
-                                )}
-                            </TouchableOpacity>
-                        )}
-                    />
+
+
+
                 </View>
 
                 {/*location picker*/}
@@ -93,7 +86,7 @@ const Post = () => {
                     <Controller
                         name="location"
                         control={control}
-                        rules={{ required: true }}
+                        // rules={{ required: true }}
                         render={({ field: { onChange, value } }) => (
                             <View style={{ height: 50, width: '100%' }}>
                                 <TouchableOpacity
@@ -244,14 +237,15 @@ const Post = () => {
                     render={({ field: { onChange, value } }) => (
                         <View><Slider
                             className="w-0.9 h-20"
-                            value={value, sliderState}
+                            value={value}
                             onValueChange={(value) => {
-                                onChange(value);
+                                onChange(Math.round(value));
                                 setSliderState(value);
                             }
                         }
                             minimumValue={0}
                             maximumValue={100}
+                            step={1}
                             minimumTrackTintColor="#06b6d4"
                             maximumTrackTintColor="#cbd5e1"
                         /></View>
