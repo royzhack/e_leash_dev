@@ -3,10 +3,13 @@ import {
     Avatars,
     Account,
     Client,
-    OAuthProvider, Databases,
+    OAuthProvider,
+    Databases,
+    Query
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
+import * as querystring from "node:querystring";
 export const config = {
     platform : 'com.roy.wasteless',
     endpoint : 'https://cloud.appwrite.io/v1',
@@ -85,4 +88,21 @@ export async function getCurrentUser() {
         console.log(error);
         return null;
     }
+}
+
+export async function getLatestBuffets() {
+  try{
+      const result = await databases.listDocuments(
+          config.databaseId!,
+          config.buffetcollectionID!,
+          [Query.orderAsc('clearedby'),
+          Query.limit(10)]
+      )
+      return result.documents;
+
+  }catch(error){
+      console.error(error)
+      return [];
+  }
+
 }
