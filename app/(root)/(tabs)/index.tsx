@@ -19,6 +19,7 @@ type Buffet = {
 };
 
 export default function Index() {
+
     const [buffets, setBuffets] = useState<Buffet[]>([]); //set buffets help to change the buffets useState and this is important as react will detect a change and rerender
     const [loading, setLoading] = useState(true);
 
@@ -92,6 +93,7 @@ export default function Index() {
             </View>
         </View>
     );
+
 }
 
 const styles = StyleSheet.create({
