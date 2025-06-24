@@ -46,6 +46,12 @@
             "./assets/fonts/Rubik-SemiBold.ttf"
           ]
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Photos of the buffet/food will be shown to others in NUS."
+        }
       ]
     ],
     "experiments": {

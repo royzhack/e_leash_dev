@@ -78,7 +78,7 @@ const TabsLayout = () => {
             />
 
             <Tabs.Screen
-                name="explore" // name of the screen file (e.g., explore.tsx)
+                name="post" // name of the screen file (e.g., explore.tsx)
                 options={{
                     title: 'Post', // title shown in the tab (not the filename)
                     headerShown: false, // hides the top header
