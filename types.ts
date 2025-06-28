@@ -1,5 +1,5 @@
 
-interface Buffet {
+export default interface Buffet {
     $id: string
     $createdAt: string
     clearedby: Date

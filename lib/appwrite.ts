@@ -3,7 +3,7 @@ import {
     Avatars,
     Account,
     Client,
-    OAuthProvider, Databases,
+    OAuthProvider, Databases, Query,
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
@@ -87,4 +87,21 @@ export async function getCurrentUser() {
         console.log(error);
         return null;
     }
+}
+
+export async function getLatestBuffets() {
+    try{
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.buffetcollectionID!,
+            [Query.orderAsc('clearedby'),
+                Query.limit(20)]
+        )
+        return result.documents;
+
+    }catch(error){
+        console.error(error)
+        return [];
+    }
+
 }
