@@ -4,7 +4,7 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "USC (University Cultural Centre)"
+        "name": "University Cultural Centre"
       },
       "geometry": {
         "coordinates": [
@@ -112,20 +112,6 @@
         "type": "Point"
       },
       "id": 7
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "E2A"
-      },
-      "geometry": {
-        "coordinates": [
-          103.77140384267733,
-          1.2987714390570346
-        ],
-        "type": "Point"
-      },
-      "id": 8
     },
     {
       "type": "Feature",
@@ -718,7 +704,7 @@
     {
       "type": "Feature",
       "properties": {
-        "name ": "MPSH 5"
+        "name": "MPSH 5"
       },
       "geometry": {
         "coordinates": [

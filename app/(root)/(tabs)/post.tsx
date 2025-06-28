@@ -9,9 +9,15 @@ import {postBuffet} from "@/app/actions/postBuffet";
 import * as ImagePicker from "expo-image-picker"
 import Camera from '@/app/(root)/(tabs)/camera'
 import {CameraType, CameraView, useCameraPermissions} from "expo-camera";
+import geojsonData from '../../../assets/NUSLocations/map.json'
+
+import locations from "@/assets/NUSLocations/locations";
+import {Dropdown} from "react-native-element-dropdown";
+import { useGlobalContext } from "@/lib/global-provider";
 
 const Post = () => {
-
+    //console.log(locations);
+    const user = useGlobalContext().user;
     const {control,
         handleSubmit,
         formState: {
@@ -21,22 +27,35 @@ const Post = () => {
             clearedby: new Date()
         }});
 
+    const locationfind = (id) => {
+        return (
+            geojsonData.features.find(x => x.id == id)
+        );
+    }
+
     const submit = async (data) => {
        console.log(data)
+        const locationentered = locationfind(data.locationinput);
+       console.log(locationentered.geometry.coordinates)
+        console.log(locationentered.properties.name)
         try {
-            const result = await postBuffet(
-                data.level,
-                data.locationdetails,
-                data.clearedby,
-                data.leftover,
-                data.additionaldetails
-            );
-            console.log("Buffet posted:", result);
-            // Optionally, show a success message, reset the form, or navigate
-        } catch (error) {
-            console.error("Failed to post buffet:", error);
-            // Optionally, show an error message to the user
-        }
+             const result = await postBuffet(
+                 data.level,
+                 data.locationdetails,
+                 data.clearedby,
+                 data.leftover,
+                 data.additionaldetails,
+                    user?.$id,
+                 locationentered.geometry.coordinates,
+                 locationentered.properties.name
+
+             );
+             console.log("Buffet posted:", result);
+             // show a success message, reset the form, or navigate
+         } catch (error) {
+             console.error("Failed to post buffet:", error);
+             //  show an error message to the user
+         }
     };
 
 
@@ -63,6 +82,13 @@ const Post = () => {
        return found ? found.label : "What floor?";
    };
 
+   const [LocationPicker, setLocationPicker] = useState(false);
+   const getLocationName = (value:any):string => {
+       const found = locations.find(loc => JSON.stringify(loc.value) === JSON.stringify(value));
+       return found? found.label : "Where is the buffet?";
+   }
+
+
 
 
     return (
@@ -82,25 +108,26 @@ const Post = () => {
                 </View>
 
                 {/*location picker*/}
-                <View className = 'mt-8 h-15'>
+
+                <View>
                     <Controller
-                        name="location"
+                        name={"locationinput"}
                         control={control}
-                        // rules={{ required: true }}
+                        rules={{ required: true }}
                         render={({ field: { onChange, value } }) => (
                             <View style={{ height: 50, width: '100%' }}>
                                 <TouchableOpacity
-                                    onPress={() => setPickerVisible(true)}
+                                    onPress={() => setLocationPicker(true)}
                                     className="border border-gray-300 rounded p-2">
                                     <Text className="text-gray-700">
-                                        {!value ? "Select location" : value}
+                                        {getLocationName(value)}
                                     </Text>
                                 </TouchableOpacity>
                                 <Modal
-                                    visible={isPickerVisible}
+                                    visible={LocationPicker}
                                     transparent={true}
                                     animationType="slide"
-                                    onRequestClose={() => setPickerVisible(false)}
+                                    onRequestClose={() => setLocationPicker(false)}
                                 >
                                     <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.3)' }}>
                                         <View style={{ backgroundColor: 'white', margin: 20, borderRadius: 10 }}>
@@ -109,21 +136,24 @@ const Post = () => {
                                                 onValueChange={(itemValue) => {
                                                     //setSelectedLocation(itemValue);
                                                     onChange(itemValue);
-                                                    setPickerVisible(false); // Hide modal after selection
+                                                    //setLocationPicker(false); // Hide modal after selection
                                                 }}
                                                 style={{ color: 'black' }} // Sets the selected value text color
                                                 itemStyle={{ color: 'black' }} // Sets the dropdown item text color
                                             >
-                                                <Picker.Item label="COM 2" value="COM 2" />
-                                                <Picker.Item label="COM 1" value="COM 1" />
-                                                <Picker.Item label="COM 3" value="COM 3" />
+                                                {locations.map(location => (
+                                                    <Picker.Item key={location.value} label={location.label} value={location.value} />
+                                                ))}
                                             </Picker>
-                                            <Button title="Close" onPress={() => setPickerVisible(false)} />
+                                            <Button title="Close" onPress={() => setLocationPicker(false)} />
                                         </View>
                                     </View>
                                 </Modal>
                             </View>
-                        )}></Controller>
+                        )}
+                    />
+
+
                 </View>
 
 
@@ -281,4 +311,7 @@ const Post = () => {
         </SafeAreaView>
     )
 }
+
+
 export default Post
+

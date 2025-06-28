@@ -3,9 +3,11 @@ import {ID} from "react-native-appwrite";
 
 // @ts-ignore
 export async function postBuffet(level: number, locationdetails:string,  clearedby: Date, leftover: number,
-                                 additionaldetails: string): Promise<Buffet> {
+                                 additionaldetails: string, userID: string, locationcoords: number[], locationname: string): Promise<Buffet> {
+
     const newBuffet = {level: level, locationdetails: locationdetails, clearedby: clearedby.toISOString(),
-                            leftover: leftover, additionaldetails: additionaldetails};
+                            leftover: leftover, additionaldetails: additionaldetails, locationname: locationname,
+                            userID: userID, locationcoordslat: locationcoords[0], locationcoordslong: locationcoords[1]};
 
     try {
         const response = await databases.createDocument(
@@ -24,7 +26,11 @@ export async function postBuffet(level: number, locationdetails:string,  cleared
             additionaldetails: response.additionaldetails,
             level: response.level,
             locationdetails: response.locationdetails,
-            // buffetpics: response.buffetpics, // Only if in your schema/interface
+            locationname: response.locationname,
+            userID: response.userID,
+            locationcoordslat: response.locationcoordslat,
+            locationcoordslong: response.locationcoordslong
+
             // nuslocation: response.nuslocation // Only if in your schema/interface
         };
 

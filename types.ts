@@ -1,3 +1,4 @@
+
 interface Buffet {
     $id: string
     $createdAt: string
@@ -6,5 +7,14 @@ interface Buffet {
     additionaldetails: string
     level: number
     locationdetails: string
+    locationname: string
+    userID: string
+    locationcoordslat: number
+    locationcoordslong: number
 }
+
+// declare module '*.geojson' {
+//     const value: any;
+//     export default value;
+// }
 

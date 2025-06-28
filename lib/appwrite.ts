@@ -27,6 +27,8 @@ export const account = new Account(client)
 export const databases = new Databases(client)
 
 
+
+
 export async function login() {
     try {
         const redirectUri = Linking.createURL("/(root)/(tabs)/profile")
