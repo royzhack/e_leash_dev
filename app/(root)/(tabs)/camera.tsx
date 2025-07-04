@@ -4,7 +4,7 @@ import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function Camera() {
+export default function Camera({ onPhotoTaken, onClose }) {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const [photo, setPhoto] = useState<any>(null);
@@ -37,9 +37,9 @@ export default function Camera() {
                 exif: false,
             };
             const takedPhoto = await cameraRef.current.takePictureAsync(options);
-
             setPhoto(takedPhoto)
-            console.log(takedPhoto);
+            if (onPhotoTaken) onPhotoTaken(takedPhoto);
+            console.log("Take photo:", takedPhoto);
         }
     };
 
@@ -59,6 +59,7 @@ export default function Camera() {
                     </TouchableOpacity>
                 </View>
             </CameraView>
+            <Button title="Close" onPress={onClose} />
         </View>
     );
 }

@@ -4,7 +4,7 @@ import {
     View,
     FlatList,
     ActivityIndicator,
-    StyleSheet, ScrollView,
+    StyleSheet, ScrollView, SafeAreaView
 } from "react-native";
 import { Link } from "expo-router";
 import { getLatestBuffets } from "@/lib/appwrite"; // adjust path
@@ -19,8 +19,8 @@ export default function Index() {
         async function fetchBuffets() {
             setLoading(true);
             const docs = await getLatestBuffets();
-            console.log("🔥 getLatestBuffets returned:", docs);
-            console.log("#################",buffets);
+            //console.log("🔥 getLatestBuffets returned:", docs);
+            //console.log("#################",buffets);
             setBuffets(docs);
             setLoading(false);
         }
@@ -41,7 +41,7 @@ export default function Index() {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <Text style={styles.heading}>Welcome to NUS WasteLess</Text>
             <Text style={styles.count}>
                 Found {buffets.length} buffet{buffets.length === 1 ? "" : "s"}
@@ -54,7 +54,7 @@ export default function Index() {
                     <View style={styles.card}>
                         <Text style={styles.title}>Level: {levelfix(item.level)}</Text>
                         <Text>Leftover: {item.leftover + "%"}</Text>
-                        <Text>Location: {item.locationdetails}</Text>
+                        <Text>Location: {item.locationname}</Text>
                         <Text>
                             Details: {item.additionaldetails || "—"}
                         </Text>
@@ -69,25 +69,25 @@ export default function Index() {
                 )}
             />
 
-            <View style={styles.links}>
-                <Link href="/sign-in" style={styles.linkText}>
-                    Sign In
-                </Link>
-                <Link href="/post" style={styles.linkText}>
-                    Explore
-                </Link>
-                <Link href="/profile" style={styles.linkText}>
-                    Profile
-                </Link>
-                <Link href="/properties/1" style={styles.linkText}>
-                    Properties
-                </Link>
-                <Link href="/cameraPost" style={styles.linkText}>
-                    Camera
-                </Link>
-            </View>
+            {/*<View style={styles.links}>*/}
+            {/*    <Link href="/sign-in" style={styles.linkText}>*/}
+            {/*        Sign In*/}
+            {/*    </Link>*/}
+            {/*    <Link href="/post" style={styles.linkText}>*/}
+            {/*        Explore*/}
+            {/*    </Link>*/}
+            {/*    <Link href="/profile" style={styles.linkText}>*/}
+            {/*        Profile*/}
+            {/*    </Link>*/}
+            {/*    <Link href="/properties/1" style={styles.linkText}>*/}
+            {/*        Properties*/}
+            {/*    </Link>*/}
+            {/*    <Link href="/cameraPost" style={styles.linkText}>*/}
+            {/*        Camera*/}
+            {/*    </Link>*/}
+            {/*</View>*/}
 
-        </View>
+        </SafeAreaView>
     );
 
 }

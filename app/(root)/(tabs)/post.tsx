@@ -1,4 +1,16 @@
-import {View, Text, ScrollView, TouchableOpacity, TextInput, Button, Platform, SafeAreaView, Modal, Image} from 'react-native'
+import {
+    View,
+    Text,
+    ScrollView,
+    TouchableOpacity,
+    TextInput,
+    Button,
+    Platform,
+    SafeAreaView,
+    Modal,
+    Image,
+    StyleSheet, Alert
+} from 'react-native'
 import React, {useRef, useState} from 'react'
 import {useForm, Controller} from "react-hook-form" //form saving
 import {Soup} from "lucide-react-native";
@@ -8,12 +20,13 @@ import Slider from '@react-native-community/slider'; //leftover
 import {postBuffet} from "@/app/actions/postBuffet";
 import * as ImagePicker from "expo-image-picker"
 import Camera from '@/app/(root)/(tabs)/camera'
-import {CameraType, CameraView, useCameraPermissions} from "expo-camera";
+
 import geojsonData from '../../../assets/NUSLocations/map.json'
 
 import locations from "@/assets/NUSLocations/locations";
 import {Dropdown} from "react-native-element-dropdown";
 import { useGlobalContext } from "@/lib/global-provider";
+import {CameraType, CameraView, useCameraPermissions} from "expo-camera";
 
 const Post = () => {
     //console.log(locations);
@@ -24,7 +37,8 @@ const Post = () => {
             errors
         }
     } = useForm({defaultValues: {
-            clearedby: new Date()
+            clearedby: new Date(),
+            level: 1
         }});
 
     const locationfind = (id) => {
@@ -35,6 +49,16 @@ const Post = () => {
 
     const submit = async (data) => {
        console.log(data)
+
+        if (!photo) {
+            Alert.alert(
+                "No picture taken",
+                "Please take a picture of the buffet",
+                [{text: 'Ok'}]
+            );
+            return;
+        }
+
         const locationentered = locationfind(data.locationinput);
        console.log(locationentered.geometry.coordinates)
         console.log(locationentered.properties.name)
@@ -88,6 +112,10 @@ const Post = () => {
        return found? found.label : "Where is the buffet?";
    }
 
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [photo, setPhoto] = useState(null);
+
+
 
 
 
@@ -102,10 +130,30 @@ const Post = () => {
 
                 {/*Pictures of buffet*/}
                 <View>
-
-
-
+                    <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>Buffet Photo</Text>
+                    {photo ? (
+                        <View>
+                            <Image
+                                source={{ uri: photo.uri }}
+                                style={{ width: 200, height: 200, borderRadius: 8 }}
+                            />
+                            <Button title="Retake Photo" onPress={() => setIsCameraOpen(true)} />
+                        </View>
+                    ) : (
+                        <Button title="Take Photo" onPress={() => setIsCameraOpen(true)} />
+                    )}
+                    <Modal visible={isCameraOpen} animationType="slide">
+                        <Camera
+                            onPhotoTaken={(img) => {
+                                setPhoto(img);
+                                setIsCameraOpen(false);
+                                console.log("PhotoTaken", photo);
+                            }}
+                            onClose={() => setIsCameraOpen(false)}
+                        />
+                    </Modal>
                 </View>
+
 
                 {/*location picker*/}
 
@@ -207,7 +255,7 @@ const Post = () => {
                 <View>
                     <Text>Additional details (eg. near MPSH/drop of point)</Text>
                         <Controller
-                            name="detailslocation"
+                            name="locationdetails"
                             control={control}
                             render={({field: { onChange, onBlur, value } }) => (
                                 <TextInput
@@ -312,6 +360,34 @@ const Post = () => {
     )
 }
 
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    camera: {
+        flex: 1,
+    },
+    buttonContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: 'transparent',
+        margin: 64,
+    },
+    button: {
+        flex: 1,
+        alignSelf: 'flex-end',
+        alignItems: 'center',
+        marginHorizontal: 10,
+        backgroundColor: 'gray',
+        borderRadius: 10,
+    },
+    text: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+});
 
 export default Post
 
