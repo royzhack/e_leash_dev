@@ -21,12 +21,14 @@ import {postBuffet} from "@/app/actions/postBuffet";
 import * as ImagePicker from "expo-image-picker"
 import Camera from '@/app/(root)/(tabs)/camera'
 
+
 import geojsonData from '../../../assets/NUSLocations/map.json'
 
 import locations from "@/assets/NUSLocations/locations";
 import {Dropdown} from "react-native-element-dropdown";
 import { useGlobalContext } from "@/lib/global-provider";
 import {CameraType, CameraView, useCameraPermissions} from "expo-camera";
+
 
 const Post = () => {
     //console.log(locations);
@@ -137,7 +139,7 @@ const Post = () => {
                                 source={{ uri: photo.uri }}
                                 style={{ width: 200, height: 200, borderRadius: 8 }}
                             />
-                            <Button title="Retake Photo" onPress={() => setIsCameraOpen(true)} />
+                            <Button title="Retake Photo" onPress={() => setIsCameraOpen(true)} /> {/* sets the usestate of the camera to be true , */}
                         </View>
                     ) : (
                         <Button title="Take Photo" onPress={() => setIsCameraOpen(true)} />
@@ -146,7 +148,7 @@ const Post = () => {
                         <Camera
                             onPhotoTaken={(img) => {
                                 setPhoto(img);
-                                setIsCameraOpen(false);
+                                setIsCameraOpen(false); {/* sets the usestate of the camera to be false, */}
                                 console.log("PhotoTaken", photo);
                             }}
                             onClose={() => setIsCameraOpen(false)}

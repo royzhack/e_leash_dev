@@ -8,10 +8,10 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 import { getLatestBuffets } from "@/lib/appwrite"; // adjust path
-
+import Getlocation from '@/app/actions/getlocation'
 
 export default function Index() {
-
+    Getlocation();
     const [buffets, setBuffets] = useState<Buffet[]>([]); //set buffets help to change the buffets useState and this is important as react will detect a change and rerender
     const [loading, setLoading] = useState(true);
 
