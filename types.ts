@@ -11,6 +11,7 @@ export default interface Buffet {
     userID: string
     locationcoordslat: number
     locationcoordslong: number
+    photoID: string
 }
 
 // declare module '*.geojson' {

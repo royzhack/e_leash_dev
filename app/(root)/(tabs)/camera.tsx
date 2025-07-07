@@ -32,14 +32,14 @@ export default function Camera({ onPhotoTaken, onClose }) {
     const handleTakePhoto =  async () => {
         if (cameraRef.current) {
             const options = {
-                quality: 1,
+                quality: 0.8,
                 base64: true,
                 exif: false,
             };
             const takedPhoto = await cameraRef.current.takePictureAsync(options);
             setPhoto(takedPhoto)
             if (onPhotoTaken) onPhotoTaken(takedPhoto);
-            console.log("Take photo:", takedPhoto);
+
         }
     };
 
