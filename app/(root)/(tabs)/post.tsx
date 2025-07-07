@@ -1,395 +1,402 @@
+import React, { useState } from 'react';
 import {
     View,
     Text,
+    SafeAreaView,
     ScrollView,
     TouchableOpacity,
     TextInput,
     Button,
-    Platform,
-    SafeAreaView,
     Modal,
     Image,
-    StyleSheet, Alert
-} from 'react-native'
-import React, {useRef, useState} from 'react'
-import {useForm, Controller} from "react-hook-form" //form saving
-import {Soup} from "lucide-react-native";
-import DateTimePicker from '@react-native-community/datetimepicker' //time
-import {Picker} from '@react-native-picker/picker'; //location
-import Slider from '@react-native-community/slider'; //leftover
-import {postBuffet} from "@/app/actions/postBuffet";
-import * as ImagePicker from "expo-image-picker"
-import Camera from '@/app/(root)/(tabs)/camera'
+    StyleSheet,
+    Alert,
+    Platform
+} from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { Soup } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import Slider from '@react-native-community/slider';
+import { AntDesign } from '@expo/vector-icons';
+import Camera from '@/app/(root)/(tabs)/camera';
+import { postBuffet } from '@/app/actions/postBuffet';
+import { useGlobalContext } from '@/lib/global-provider';
+import locations from '@/assets/NUSLocations/locations';
+import { Dropdown } from 'react-native-element-dropdown';
+import geojsonData from '@/assets/NUSLocations/map.json';
+// Appwrite SDK imports
+import { Client, ID, Storage } from 'react-native-appwrite';
 
+// Appwrite configuration
+const AppwriteConfig = {
+    endpoint: 'https://cloud.appwrite.io/v1',
+    projectID: '6837256a001912254094',
+    bucketID: '685387bd00305b201702',
+};
 
-import geojsonData from '../../../assets/NUSLocations/map.json'
+// Initialize Appwrite client & storage
+const client = new Client()
+    .setEndpoint(AppwriteConfig.endpoint)
+    .setProject(AppwriteConfig.projectID);
+const storage = new Storage(client);
+const BUCKET_ID = AppwriteConfig.bucketID;
 
-import locations from "@/assets/NUSLocations/locations";
-import {Dropdown} from "react-native-element-dropdown";
-import { useGlobalContext } from "@/lib/global-provider";
-import {CameraType, CameraView, useCameraPermissions} from "expo-camera";
+// Theme colors
+const theme = {
+    primary: '#0061FF',
+    overlay: 'rgba(37,99,235,0.3)',
+};
 
+// Level options
+const LEVELS = [
+    { label: '3', value: 3 },
+    { label: '2', value: 2 },
+    { label: '1', value: 1 },
+    { label: 'B1', value: -1 },
+    { label: 'B2', value: -2 },
+];
 
-const Post = () => {
-    //console.log(locations);
+// GeoJSON helper
+const locationfind = id => geojsonData.features.find(x => x.id === id);
+
+export default function Post() {
     const user = useGlobalContext().user;
-    const {control,
-        handleSubmit,
-        formState: {
-            errors
-        }
-    } = useForm({defaultValues: {
+    const { control, handleSubmit, formState: { errors } } = useForm({
+        defaultValues: {
+            location: null,
+            level: LEVELS[0].value,
             clearedby: new Date(),
-            level: 1
-        }});
+            leftover: 0,
+            additionaldetails: ''
+        }
+    });
 
-    const locationfind = (id) => {
-        return (
-            geojsonData.features.find(x => x.id == id)
-        );
-    }
+    // Photo state
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [photos, setPhotos] = useState([]);
+    const handlePhotoTaken = img => setPhotos(p => [...p, img]);
+    const removePhoto = idx => setPhotos(p => p.filter((_, i) => i !== idx));
 
-    const submit = async (data) => {
-       console.log(data)
+    // Time picker
+    const [showTimePicker, setShowTimePicker] = useState(false);
 
-        if (!photo) {
-            Alert.alert(
-                "No picture taken",
-                "Please take a picture of the buffet",
-                [{text: 'Ok'}]
-            );
+    const onSubmit = async data => {
+        // Basic validation
+        if (!data.location) {
+            Alert.alert('Validation', 'Please select a location');
+            return;
+        }
+        if (photos.length === 0) {
+            Alert.alert('Validation', 'Please take at least one photo');
             return;
         }
 
-        const locationentered = locationfind(data.locationinput);
-       console.log(locationentered.geometry.coordinates)
-        console.log(locationentered.properties.name)
-        try {
-             const result = await postBuffet(
-                 data.level,
-                 data.locationdetails,
-                 data.clearedby,
-                 data.leftover,
-                 data.additionaldetails,
-                    user?.$id,
-                 locationentered.geometry.coordinates,
-                 locationentered.properties.name
+        // Lookup coords & name from GeoJSON
+        const feature = locationfind(data.location);
+        if (!feature) {
+            Alert.alert('Validation', 'Invalid location selected');
+            return;
+        }
+        const coords = feature.geometry.coordinates;
+        const placeName = feature.properties.name;
 
-             );
-             console.log("Buffet posted:", result);
-             // show a success message, reset the form, or navigate
-         } catch (error) {
-             console.error("Failed to post buffet:", error);
-             //  show an error message to the user
-         }
+        try {
+            // Upload each photo to Appwrite Storage
+            const uploadedPhotoUrls = await Promise.all(
+                photos.map(async photo => {
+                    // Use fetch to read file as blob
+                    const response = await fetch(photo.uri);
+                    const blob = await response.blob();
+                    // Create file in Appwrite bucket
+                    const file = await storage.createFile(
+                        BUCKET_ID,
+                        ID.unique(),
+                        blob
+                    );
+                    // Return public view URL
+                    return `${AppwriteConfig.endpoint}/storage/buckets/${file.bucketId}/files/${file.$id}/view?project=${AppwriteConfig.projectID}`;
+                })
+            );
+
+            // Submit buffet post
+            await postBuffet(
+                data.level,
+                '',
+                data.clearedby,
+                data.leftover,
+                data.additionaldetails,
+                user?.$id,
+                coords,
+                placeName,
+                uploadedPhotoUrls
+            );
+            Alert.alert('Success', 'Buffet posted successfully.');
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to upload and post buffet.');
+        }
     };
 
-
-    const [showTimePicker, setShowTimePicker] = useState(false);
-  //const [selectedTime, setSelectedTime] = useState(new Date());
-    // this is unnecessary as react hook form already takes care of use state
-
- // const [selectedLocatipn, setSelectedLocation] = useState();
-  const [isPickerVisible, setPickerVisible] = useState(false);
-
-  const [sliderState, setSliderState] = useState(0);
-
-    const [isLevelPickerVisible, setLevelPickerVisible] = useState(false);
-    const LEVELS = [
-        { label: "3", value: 3 },
-        { label: "2", value: 2 },
-        { label: "1", value: 1 },
-        { label: "B1", value: -1 },
-        { label: "B2", value: -2 },
-        ];
-    // Helper to get label from value
-   const getLevelLabel = (value) => {
-       const found = LEVELS.find(l => l.value === value);
-       return found ? found.label : "What floor?";
-   };
-
-   const [LocationPicker, setLocationPicker] = useState(false);
-   const getLocationName = (value:any):string => {
-       const found = locations.find(loc => JSON.stringify(loc.value) === JSON.stringify(value));
-       return found? found.label : "Where is the buffet?";
-   }
-
-    const [isCameraOpen, setIsCameraOpen] = useState(false);
-    const [photo, setPhoto] = useState(null);
-
-
-
-
-
     return (
-        <SafeAreaView className="h-full bg-white"> {/*first wrap everything in a safe area view*/ }
-            <ScrollView showsVerticalScrollIndicator={true} contentContainerClassName="pb-32 px-7"> {/*scrollview*/}
-                {/* Top Bar */}
-                <View className="flex flex-row items-center justify-between mt-5 ">
-                    <Text className="text-xl font-rubik-bold">New Buffet</Text>
-                    <Soup size={30} color="#000" />
+        <SafeAreaView style={styles.container}>
+            <View style={styles.topBar}>
+                <Text style={[styles.title, { color: theme.primary }]}>New Buffet</Text>
+                <Soup size={24} color={theme.primary} />
+            </View>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                {/* Location Dropdown */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Location</Text>
+                    <Controller
+                        control={control}
+                        name="location"
+                        rules={{ required: true }}
+                        render={({ field: { onChange, value } }) => (
+                            <Dropdown
+                                style={styles.dropdown}
+                                data={locations}
+                                labelField="label"
+                                valueField="value"
+                                placeholder="Search location"
+                                search
+                                searchPlaceholder="Type to search..."
+                                maxHeight={200}
+                                value={value}
+                                onChange={item => onChange(item.value)}
+                                selectedTextStyle={{ color: theme.primary }}
+                                placeholderStyle={{ color: theme.primary }}
+                            />
+                        )}
+                    />
+                    {errors.location && <Text style={styles.errorText}>Location is required.</Text>}
                 </View>
 
-                {/*Pictures of buffet*/}
-                <View>
-                    <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>Buffet Photo</Text>
-                    {photo ? (
-                        <View>
-                            <Image
-                                source={{ uri: photo.uri }}
-                                style={{ width: 200, height: 200, borderRadius: 8 }}
+                {/* Level Dropdown */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Level</Text>
+                    <Controller
+                        control={control}
+                        name="level"
+                        rules={{ required: true }}
+                        render={({ field: { onChange, value } }) => (
+                            <Dropdown
+                                style={styles.dropdown}
+                                data={LEVELS}
+                                labelField="label"
+                                valueField="value"
+                                placeholder="Select level"
+                                value={value}
+                                onChange={item => onChange(item.value)}
+                                selectedTextStyle={{ color: theme.primary }}
+                                placeholderStyle={{ color: theme.primary }}
                             />
-                            <Button title="Retake Photo" onPress={() => setIsCameraOpen(true)} /> {/* sets the usestate of the camera to be true , */}
-                        </View>
-                    ) : (
-                        <Button title="Take Photo" onPress={() => setIsCameraOpen(true)} />
-                    )}
+                        )}
+                    />
+                    {errors.level && <Text style={styles.errorText}>Level is required.</Text>}
+                </View>
+
+                {/* Photo gallery and camera modal */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Photos</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator
+                        contentContainerStyle={styles.photoScroll}
+                    >
+                        {photos.map((photo, idx) => (
+                            <View key={idx} style={styles.thumbnailWrapper}>
+                                <Image source={{ uri: photo.uri }} style={styles.thumbnail} />
+                                <TouchableOpacity
+                                    style={styles.removeButton}
+                                    onPress={() => removePhoto(idx)}
+                                >
+                                    <AntDesign name="closecircle" size={20} color="#fff" />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                        {photos.length < 5 && (
+                            <TouchableOpacity
+                                style={styles.addButton}
+                                onPress={() => setIsCameraOpen(true)}
+                            >
+                                <AntDesign name="pluscircleo" size={36} color={theme.primary} />
+                                <Text style={styles.addText}>Add Photo</Text>
+                            </TouchableOpacity>
+                        )}
+                    </ScrollView>
                     <Modal visible={isCameraOpen} animationType="slide">
                         <Camera
-                            onPhotoTaken={(img) => {
-                                setPhoto(img);
-                                setIsCameraOpen(false); {/* sets the usestate of the camera to be false, */}
-                                console.log("PhotoTaken", photo);
-                            }}
+                            onPhotoTaken={handlePhotoTaken}
                             onClose={() => setIsCameraOpen(false)}
                         />
                     </Modal>
                 </View>
 
-
-                {/*location picker*/}
-
-                <View>
+                {/* Cleared By Time Picker */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Cleared By</Text>
                     <Controller
-                        name={"locationinput"}
                         control={control}
-                        rules={{ required: true }}
-                        render={({ field: { onChange, value } }) => (
-                            <View style={{ height: 50, width: '100%' }}>
-                                <TouchableOpacity
-                                    onPress={() => setLocationPicker(true)}
-                                    className="border border-gray-300 rounded p-2">
-                                    <Text className="text-gray-700">
-                                        {getLocationName(value)}
-                                    </Text>
-                                </TouchableOpacity>
-                                <Modal
-                                    visible={LocationPicker}
-                                    transparent={true}
-                                    animationType="slide"
-                                    onRequestClose={() => setLocationPicker(false)}
-                                >
-                                    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-                                        <View style={{ backgroundColor: 'white', margin: 20, borderRadius: 10 }}>
-                                            <Picker
-                                                selectedValue={value}
-                                                onValueChange={(itemValue) => {
-                                                    //setSelectedLocation(itemValue);
-                                                    onChange(itemValue);
-                                                    //setLocationPicker(false); // Hide modal after selection
-                                                }}
-                                                style={{ color: 'black' }} // Sets the selected value text color
-                                                itemStyle={{ color: 'black' }} // Sets the dropdown item text color
-                                            >
-                                                {locations.map(location => (
-                                                    <Picker.Item key={location.value} label={location.label} value={location.value} />
-                                                ))}
-                                            </Picker>
-                                            <Button title="Close" onPress={() => setLocationPicker(false)} />
-                                        </View>
-                                    </View>
-                                </Modal>
-                            </View>
-                        )}
-                    />
-
-
-                </View>
-
-
-                {/*location's level picker*/}
-                <View className = 'mt-8 h-15'>
-                    <Controller
-                        name={'level'}
-                        control={control}
-                        rules={{ required: true }}
-                        render={({ field: { onChange, value } }) => (
-                            <View style={{ height: 50, width: '100%' }}>
-                                <TouchableOpacity
-                                    onPress={() => setLevelPickerVisible(true)}
-                                    className="border border-gray-300 rounded p-2">
-                                    <Text className="text-gray-700">
-                                        {getLevelLabel(value)}
-                                    </Text>
-                                </TouchableOpacity>
-                                <Modal
-                                    visible={isLevelPickerVisible}
-                                    transparent={true}
-                                    animationType="slide"
-                                    onRequestClose={() => setLevelPickerVisible(false)}
-                                >
-                                    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-                                        <View style={{ backgroundColor: 'white', margin: 20, borderRadius: 10 }}>
-                                            <Picker
-                                                selectedValue={value}
-                                                onValueChange={(itemValue) => {
-                                                    //setSelectedLocation(itemValue);
-                                                    onChange(itemValue);
-                                                    setLevelPickerVisible(false); // Hide modal after selection
-                                                }}
-                                                style={{ color: 'black' }} // Sets the selected value text color
-                                                itemStyle={{ color: 'black' }} // Sets the dropdown item text color
-                                            >
-                                                {LEVELS.map(level => (
-                                                    <Picker.Item key={level.value} label={level.label} value={level.value} />
-                                                ))}
-                                            </Picker>
-                                            <Button title="Close" onPress={() => setLevelPickerVisible(false)} />
-                                        </View>
-                                    </View>
-                                </Modal>
-                            </View>
-                        )}
-                    />
-                </View>
-
-                {/*additional details regarding location*/}
-                <View>
-                    <Text>Additional details (eg. near MPSH/drop of point)</Text>
-                        <Controller
-                            name="locationdetails"
-                            control={control}
-                            render={({field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    placeholder="Enter additional details"
-                                    onBlur={onBlur}in
-                                    onChangeText={onChange}
-                                    value={value}
-                                />
-                            )}
-                        />
-                </View>
-
-                {/* Time Picker */}
-                <View className = 'mt-8'>
-                    <Text>When will the food be cleared by/expire?</Text>
-                    <Controller
                         name="clearedby"
-                        control={control}
                         render={({ field: { onChange, value } }) => (
-                            <View>
+                            <>
                                 <TouchableOpacity
+                                    style={styles.selector}
                                     onPress={() => setShowTimePicker(true)}
-                                    className="border border-gray-300 rounded p-2">
-                                    <Text className="text-gray-700">
-                                        {!value ? 'Select time' : value.toLocaleTimeString([], {
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
+                                >
+                                    <Text style={styles.selectorText}>
+                                        {value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </Text>
                                 </TouchableOpacity>
-
                                 {showTimePicker && (
                                     <DateTimePicker
-                                        value={value || new Date()}
+                                        value={value}
                                         mode="time"
-                                        display="default"
-                                        onChange={(event, date) => {
-                                            setShowTimePicker(false); // Hide picker after selection
-                                            if (date) {
-                                               // setSelectedTime(date);
-                                                onChange(date);
-                                            }
+                                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                        onChange={(_, date) => {
+                                            setShowTimePicker(false);
+                                            date && onChange(date);
                                         }}
                                     />
                                 )}
+                            </>
+                        )}
+                    />
+                </View>
+
+                {/* Leftover Slider */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Leftover Level ({photos.length}% Photos Uploaded)</Text>
+                    <Controller
+                        control={control}
+                        name="leftover"
+                        render={({ field: { onChange, value } }) => (
+                            <View style={styles.sliderContainer}>
+                                <Slider
+                                    style={{ flex: 1 }}
+                                    minimumValue={0}
+                                    maximumValue={100}
+                                    step={1}
+                                    value={value}
+                                    onValueChange={onChange}
+                                    minimumTrackTintColor={theme.primary}
+                                />
+                                <Text style={styles.sliderValue}>{value}%</Text>
                             </View>
                         )}
                     />
                 </View>
 
-                {/*Leftover slider*/}
-                <View>
-                    <Text>Leftovers</Text>
-                <Controller
-                    name="leftover"
-                    control = {control}
-                    render={({ field: { onChange, value } }) => (
-                        <View><Slider
-                            className="w-0.9 h-20"
-                            value={value}
-                            onValueChange={(value) => {
-                                onChange(Math.round(value));
-                                setSliderState(value);
-                            }
-                        }
-                            minimumValue={0}
-                            maximumValue={100}
-                            step={1}
-                            minimumTrackTintColor="#06b6d4"
-                            maximumTrackTintColor="#cbd5e1"
-                        /></View>
-                    )}/>
-                    <Text>{Math.round(sliderState) + "%"}</Text>
-                </View>
-
-                {/*additional details general*/}
-                <View>
-                    <Text>Additional details</Text>
+                {/* Additional Details */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Additional Details</Text>
                     <Controller
-                        name="additionaldetails"
                         control={control}
-                        render={({field: { onChange, onBlur, value } }) => (
+                        name="additionaldetails"
+                        render={({ field: { onChange, value } }) => (
                             <TextInput
-                                placeholder="Enter additional details"
-                                onBlur={onBlur}in
-                                onChangeText={onChange}
+                                style={styles.textInput}
+                                placeholder="Enter any notes"
+                                multiline
                                 value={value}
+                                onChangeText={onChange}
                             />
                         )}
                     />
                 </View>
 
-
-                {/* submit button*/}
-            <View className="items-centre mt-8">
-                <TouchableOpacity onPress={handleSubmit(submit)} >
-                    <Text className="text-black font-rubik-bold self-center">Submit</Text>
-                </TouchableOpacity>
-            </View>
+                {/* Submit Button */}
+                <Button
+                    title="Submit Buffet"
+                    onPress={handleSubmit(onSubmit)}
+                    color={theme.primary}
+                />
             </ScrollView>
         </SafeAreaView>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    camera: {
-        flex: 1,
-    },
-    buttonContainer: {
-        flex: 1,
+    container: { flex: 1, backgroundColor: '#fff' },
+    topBar: {
         flexDirection: 'row',
-        backgroundColor: 'transparent',
-        margin: 64,
-    },
-    button: {
-        flex: 1,
-        alignSelf: 'flex-end',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        marginHorizontal: 10,
-        backgroundColor: 'gray',
-        borderRadius: 10,
+        padding: 16,
     },
-    text: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
+    title: { fontSize: 20, fontWeight: 'bold' },
+    scrollContent: { padding: 16, paddingBottom: 40 },
+    sectionContainer: {
+        marginBottom: 20,
+        backgroundColor: theme.overlay,
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    sectionHeaderText: {
+        padding: 12,
+        fontSize: 16,
+        fontWeight: '600',
+        backgroundColor: theme.primary,
+        color: '#fff',
+    },
+    dropdown: {
+        borderWidth: 1,
+        borderColor: theme.primary,
+        borderRadius: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        backgroundColor: theme.overlay,
+        margin: 12,
+        color: theme.primary,
+    },
+    errorText: { color: 'red', marginHorizontal: 12, marginBottom: 8 },
+    photoScroll: { alignItems: 'center', padding: 12, backgroundColor: theme.overlay },
+    thumbnailWrapper: { position: 'relative', marginRight: 12 },
+    thumbnail: { width: 80, height: 80, borderRadius: 6 },
+    removeButton: {
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        backgroundColor: theme.primary,
+        borderRadius: 12,
+        padding: 2,
+    },
+    addButton: {
+        width: 80,
+        height: 80,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: theme.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.overlay,
+    },
+    addText: { fontSize: 10, color: theme.primary, marginTop: 4, textAlign: 'center' },
+    selector: {
+        borderWidth: 1,
+        borderColor: theme.primary,
+        borderRadius: 6,
+        padding: 10,
+        backgroundColor: theme.overlay,
+        margin: 12,
+    },
+    selectorText: { color: theme.primary },
+    sliderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: theme.overlay,
+    },
+    sliderValue: { marginLeft: 12, color: theme.primary },
+    textInput: {
+        borderWidth: 1,
+        borderColor: theme.primary,
+        borderRadius: 6,
+        padding: 10,
+        minHeight: 80,
+        textAlignVertical: 'top',
+        backgroundColor: theme.overlay,
+        margin: 12,
+        color: theme.primary,
     },
 });
-
-export default Post
-
