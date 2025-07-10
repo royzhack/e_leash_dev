@@ -52,7 +52,7 @@ export default function Camera({ onPhotoTaken, onClose }: Props) {
             const takenPhoto = await cameraRef.current.takePictureAsync(options);
             setPhotos((prev) => [...prev, takenPhoto]);
             if (onPhotoTaken) onPhotoTaken(takenPhoto);
-            console.log('Took photo:', takenPhoto);
+            console.log('Took photo:', takenPhoto.uri);
         }
     };
 

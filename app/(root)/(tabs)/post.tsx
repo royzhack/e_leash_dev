@@ -26,6 +26,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import geojsonData from '@/assets/NUSLocations/map.json';
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
+import * as FileSystem from 'expo-file-system';
 
 // Appwrite configuration
 const AppwriteConfig = {
@@ -49,11 +50,16 @@ const theme = {
 
 // Level options
 const LEVELS = [
+    { label: '7', value: 7 },
+    { label: '6', value: 6 },
+    { label: '5', value: 5 },
+    { label: '4', value: 4 },
     { label: '3', value: 3 },
     { label: '2', value: 2 },
     { label: '1', value: 1 },
     { label: 'B1', value: -1 },
     { label: 'B2', value: -2 },
+    { label: 'B3', value: -3 }
 ];
 
 // GeoJSON helper
@@ -64,7 +70,7 @@ export default function Post() {
     const { control, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
             location: null,
-            level: LEVELS[0].value,
+            level: LEVELS[4].label,
             clearedby: new Date(),
             leftover: 0,
             additionaldetails: ''
@@ -86,6 +92,7 @@ export default function Post() {
             Alert.alert('Validation', 'Please select a location');
             return;
         }
+        console.log(photos.length);
         if (photos.length === 0) {
             Alert.alert('Validation', 'Please take at least one photo');
             return;
@@ -100,21 +107,40 @@ export default function Post() {
         const coords = feature.geometry.coordinates;
         const placeName = feature.properties.name;
 
+        const photofileID = [];
+
         try {
             // Upload each photo to Appwrite Storage
             const uploadedPhotoUrls = await Promise.all(
                 photos.map(async photo => {
+                    const fileInfo = await FileSystem.getInfoAsync(photo.uri);
+                    if (!fileInfo) {
+                        console.error('File not found', photo.uri);
+                    }
+                    if (!photo.uri || typeof photo.uri !== 'string' || !photo.uri.startsWith('file://')) {
+                        throw new Error(`Invalid photo URI: ${photo.uri}`);
+                    }
                     // Use fetch to read file as blob
                     const response = await fetch(photo.uri);
                     const blob = await response.blob();
+
+                    //make an unique id for each file
+                    const id = ID.unique()
+                    photofileID.push(id)
                     // Create file in Appwrite bucket
                     const file = await storage.createFile(
                         BUCKET_ID,
-                        ID.unique(),
+                        id,
                         blob
                     );
                     // Return public view URL
-                    return `${AppwriteConfig.endpoint}/storage/buckets/${file.bucketId}/files/${file.$id}/view?project=${AppwriteConfig.projectID}`;
+                    const fileUrl = `${AppwriteConfig.endpoint}/v1/storage/buckets/${file.bucketId}/files/${file.$id}/view?project=${AppwriteConfig.projectID}`;
+
+                    return {
+                        fileId: file.$id,
+                        fileUrl: fileUrl,
+                        file: file
+                    };
                 })
             );
 
@@ -128,7 +154,7 @@ export default function Post() {
                 user?.$id,
                 coords,
                 placeName,
-                uploadedPhotoUrls
+                photofileID,
             );
             Alert.alert('Success', 'Buffet posted successfully.');
         } catch (error) {

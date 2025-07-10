@@ -52,7 +52,8 @@
         {
           "photosPermission": "Photos of the buffet/food will be shown to others in NUS."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
