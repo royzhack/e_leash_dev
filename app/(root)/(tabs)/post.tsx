@@ -19,7 +19,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
 import { AntDesign } from '@expo/vector-icons';
 import Camera from '@/app/(root)/(tabs)/camera';
-import { postBuffet } from '@/app/actions/postBuffet';
+import {postBuffet, postPhoto, supplementPhoto} from '@/app/actions/postBuffet';
 import { useGlobalContext } from '@/lib/global-provider';
 import locations from '@/assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -27,20 +27,7 @@ import geojsonData from '@/assets/NUSLocations/map.json';
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
 import * as FileSystem from 'expo-file-system';
-
-// Appwrite configuration
-const AppwriteConfig = {
-    endpoint: 'https://cloud.appwrite.io/v1',
-    projectID: '6837256a001912254094',
-    bucketID: '685387bd00305b201702',
-};
-
-// Initialize Appwrite client & storage
-const client = new Client()
-    .setEndpoint(AppwriteConfig.endpoint)
-    .setProject(AppwriteConfig.projectID);
-const storage = new Storage(client);
-const BUCKET_ID = AppwriteConfig.bucketID;
+import {uploadfile} from "@/lib/appwrite";
 
 // Theme colors
 const theme = {
@@ -107,45 +94,26 @@ export default function Post() {
         const coords = feature.geometry.coordinates;
         const placeName = feature.properties.name;
 
-        const photofileID = [];
+        let photofileID = [];
+
+        async function postPhoto (pictures) {
+
+            for (let i = 0; i < pictures.length; i++) {
+                const id = ID.unique();
+                photofileID.push(id);
+                const photo = await supplementPhoto(pictures[i]);
+                const result = await uploadfile(photo, id);
+                console.log(result);
+
+            }
+        }
 
         try {
             // Upload each photo to Appwrite Storage
-            const uploadedPhotoUrls = await Promise.all(
-                photos.map(async photo => {
-                    const fileInfo = await FileSystem.getInfoAsync(photo.uri);
-                    if (!fileInfo) {
-                        console.error('File not found', photo.uri);
-                    }
-                    if (!photo.uri || typeof photo.uri !== 'string' || !photo.uri.startsWith('file://')) {
-                        throw new Error(`Invalid photo URI: ${photo.uri}`);
-                    }
-                    // Use fetch to read file as blob
-                    const response = await fetch(photo.uri);
-                    const blob = await response.blob();
-
-                    //make an unique id for each file
-                    const id = ID.unique()
-                    photofileID.push(id)
-                    // Create file in Appwrite bucket
-                    const file = await storage.createFile(
-                        BUCKET_ID,
-                        id,
-                        blob
-                    );
-                    // Return public view URL
-                    const fileUrl = `${AppwriteConfig.endpoint}/v1/storage/buckets/${file.bucketId}/files/${file.$id}/view?project=${AppwriteConfig.projectID}`;
-
-                    return {
-                        fileId: file.$id,
-                        fileUrl: fileUrl,
-                        file: file
-                    };
-                })
-            );
-
+            await postPhoto(photos);
+            console.log("Photos fileid:", photofileID);
             // Submit buffet post
-            await postBuffet(
+            const result = await postBuffet(
                 data.level,
                 '',
                 data.clearedby,
@@ -157,6 +125,7 @@ export default function Post() {
                 photofileID,
             );
             Alert.alert('Success', 'Buffet posted successfully.');
+            console.log("Buffet posted", result )
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Failed to upload and post buffet.');
@@ -302,7 +271,7 @@ export default function Post() {
                                     style={{ flex: 1 }}
                                     minimumValue={0}
                                     maximumValue={100}
-                                    step={1}
+                                    step={5}
                                     value={value}
                                     onValueChange={onChange}
                                     minimumTrackTintColor={theme.primary}
@@ -314,7 +283,7 @@ export default function Post() {
                 </View>
 
                 {/* Additional Details */}
-                <View style={styles.sectionContainer}>
+                <SafeAreaView style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Additional Details</Text>
                     <Controller
                         control={control}
@@ -329,7 +298,7 @@ export default function Post() {
                             />
                         )}
                     />
-                </View>
+                </SafeAreaView>
 
                 {/* Submit Button */}
                 <Button

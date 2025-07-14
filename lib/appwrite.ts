@@ -3,10 +3,11 @@ import {
     Avatars,
     Account,
     Client,
-    OAuthProvider, Databases, Query, Storage
+    OAuthProvider, Databases, Query, Storage, ID
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
+import * as FileSystem from "expo-file-system";
 export const config = {
     platform : 'com.roy.wasteless',
     endpoint : 'https://cloud.appwrite.io/v1',
@@ -107,3 +108,23 @@ export async function getLatestBuffets() {
     }
 
 }
+
+export async function uploadfile(file, fileID) {
+    try {
+        const result = await storage.createFile(
+            config.bucketID, // bucketId
+            fileID, // fileId
+            file // file
+        );
+
+        console.log(result);
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+
+
+
+
+
