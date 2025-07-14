@@ -48,7 +48,7 @@ export default function Camera({ onPhotoTaken, onClose }: Props) {
             return;
         }
         if (cameraRef.current) {
-            const options = { quality: 1, base64: true, exif: false };
+            const options = { quality: 1, base64: false, exif: false };
             const takenPhoto = await cameraRef.current.takePictureAsync(options);
             setPhotos((prev) => [...prev, takenPhoto]);
             if (onPhotoTaken) onPhotoTaken(takenPhoto);

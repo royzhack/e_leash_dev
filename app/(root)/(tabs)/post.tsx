@@ -1,3 +1,5 @@
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
 import React, { useState } from 'react';
 import {
     View,
@@ -11,7 +13,7 @@ import {
     Image,
     StyleSheet,
     Alert,
-    Platform
+    Platform,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Soup } from 'lucide-react-native';
@@ -24,9 +26,10 @@ import { useGlobalContext } from '@/lib/global-provider';
 import locations from '@/assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
 import geojsonData from '@/assets/NUSLocations/map.json';
+import * as FileSystem from 'expo-file-system';
 // Appwrite SDK imports
-import { Client, ID, Storage } from 'react-native-appwrite';
-
+import { Client, ID, Storage, Models } from 'appwrite';
+import splashicon from "@/assets/images/splashicon.png"
 // Appwrite configuration
 const AppwriteConfig = {
     endpoint: 'https://cloud.appwrite.io/v1',
@@ -34,20 +37,20 @@ const AppwriteConfig = {
     bucketID: '685387bd00305b201702',
 };
 
-// Initialize Appwrite client & storage
+// Initialize Appwrite
 const client = new Client()
     .setEndpoint(AppwriteConfig.endpoint)
     .setProject(AppwriteConfig.projectID);
 const storage = new Storage(client);
 const BUCKET_ID = AppwriteConfig.bucketID;
 
-// Theme colors
+// Theme
 const theme = {
     primary: '#0061FF',
     overlay: 'rgba(37,99,235,0.3)',
 };
 
-// Level options
+// LEVEL options
 const LEVELS = [
     { label: '3', value: 3 },
     { label: '2', value: 2 },
@@ -56,69 +59,87 @@ const LEVELS = [
     { label: 'B2', value: -2 },
 ];
 
-// GeoJSON helper
-const locationfind = id => geojsonData.features.find(x => x.id === id);
+// GeoJSON lookup
+const locationfind = (id: number) =>
+    geojsonData.features.find(x => x.id === id);
 
-export default function Post() {
+// Photo interface
+interface RNPhoto {
+    uri: string;
+}
+
+export default function Post(): JSX.Element {
     const user = useGlobalContext().user;
-    const { control, handleSubmit, formState: { errors } } = useForm({
+    const {
+        control,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<{
+        location: number | null;
+        level: number;
+        clearedby: Date;
+        leftover: number;
+        additionaldetails: string;
+    }>({
         defaultValues: {
             location: null,
             level: LEVELS[0].value,
             clearedby: new Date(),
             leftover: 0,
-            additionaldetails: ''
-        }
+            additionaldetails: '',
+        },
     });
 
-    // Photo state
+    // Camera/Gallery state
     const [isCameraOpen, setIsCameraOpen] = useState(false);
-    const [photos, setPhotos] = useState([]);
-    const handlePhotoTaken = img => setPhotos(p => [...p, img]);
-    const removePhoto = idx => setPhotos(p => p.filter((_, i) => i !== idx));
+    const [photos, setPhotos] = useState<RNPhoto[]>([]);
+    const handlePhotoTaken = (img: RNPhoto) => setPhotos(prev => [...prev, img]);
+    const removePhoto = (idx: number) => setPhotos(prev => prev.filter((_, i) => i !== idx));
 
-    // Time picker
     const [showTimePicker, setShowTimePicker] = useState(false);
 
+    // Upload helper
+    const uploadPhotos = async (photosArr: RNPhoto[]): Promise<string[]> => {
+        const uploads = photosArr.map(async photo => {
+            const info = await FileSystem.getInfoAsync(photo.uri, { size: true });
+            const fileForUpload = {
+                uri: photo.uri,
+                name: photo.uri.split('/').pop() || ID.unique(),
+                type: 'image/jpg',
+                size: info.size || undefined,
+            }
+            console.log('fileForUpload →', fileForUpload);
+
+            const file: Models.File = await storage.createFile(
+                '685387bd00305b201702',
+                ID.unique(),
+                fileForUpload as any,
+                ['role:all'],
+                []
+            );
+            return `${AppwriteConfig.endpoint}/storage/buckets/${file.bucketId}/files/${file.$id}/view?project=${AppwriteConfig.projectID}`;
+        });
+        return Promise.all(uploads);
+    };
+
     const onSubmit = async data => {
-        // Basic validation
         if (!data.location) {
             Alert.alert('Validation', 'Please select a location');
             return;
         }
         if (photos.length === 0) {
-            Alert.alert('Validation', 'Please take at least one photo');
+            Alert.alert('Validation', 'Please add at least one photo');
             return;
         }
-
-        // Lookup coords & name from GeoJSON
-        const feature = locationfind(data.location);
+        const feature = locationfind(data.location!);
         if (!feature) {
             Alert.alert('Validation', 'Invalid location selected');
             return;
         }
         const coords = feature.geometry.coordinates;
         const placeName = feature.properties.name;
-
         try {
-            // Upload each photo to Appwrite Storage
-            const uploadedPhotoUrls = await Promise.all(
-                photos.map(async photo => {
-                    // Use fetch to read file as blob
-                    const response = await fetch(photo.uri);
-                    const blob = await response.blob();
-                    // Create file in Appwrite bucket
-                    const file = await storage.createFile(
-                        BUCKET_ID,
-                        ID.unique(),
-                        blob
-                    );
-                    // Return public view URL
-                    return `${AppwriteConfig.endpoint}/storage/buckets/${file.bucketId}/files/${file.$id}/view?project=${AppwriteConfig.projectID}`;
-                })
-            );
-
-            // Submit buffet post
+            const uploadedUrls = await uploadPhotos(photos);
             await postBuffet(
                 data.level,
                 '',
@@ -127,12 +148,12 @@ export default function Post() {
                 data.additionaldetails,
                 user?.$id,
                 coords,
-                placeName,
-                uploadedPhotoUrls
+                placeName
             );
             Alert.alert('Success', 'Buffet posted successfully.');
-        } catch (error) {
-            console.error(error);
+            setPhotos([]);
+        } catch (e) {
+            console.error(e);
             Alert.alert('Error', 'Failed to upload and post buffet.');
         }
     };
@@ -170,7 +191,6 @@ export default function Post() {
                     />
                     {errors.location && <Text style={styles.errorText}>Location is required.</Text>}
                 </View>
-
                 {/* Level Dropdown */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Level</Text>
@@ -194,8 +214,7 @@ export default function Post() {
                     />
                     {errors.level && <Text style={styles.errorText}>Level is required.</Text>}
                 </View>
-
-                {/* Photo gallery and camera modal */}
+                {/* Photo gallery */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Photos</Text>
                     <ScrollView
@@ -206,33 +225,23 @@ export default function Post() {
                         {photos.map((photo, idx) => (
                             <View key={idx} style={styles.thumbnailWrapper}>
                                 <Image source={{ uri: photo.uri }} style={styles.thumbnail} />
-                                <TouchableOpacity
-                                    style={styles.removeButton}
-                                    onPress={() => removePhoto(idx)}
-                                >
+                                <TouchableOpacity style={styles.removeButton} onPress={() => removePhoto(idx)}>
                                     <AntDesign name="closecircle" size={20} color="#fff" />
                                 </TouchableOpacity>
                             </View>
                         ))}
                         {photos.length < 5 && (
-                            <TouchableOpacity
-                                style={styles.addButton}
-                                onPress={() => setIsCameraOpen(true)}
-                            >
+                            <TouchableOpacity style={styles.addButton} onPress={() => setIsCameraOpen(true)}>
                                 <AntDesign name="pluscircleo" size={36} color={theme.primary} />
                                 <Text style={styles.addText}>Add Photo</Text>
                             </TouchableOpacity>
                         )}
                     </ScrollView>
                     <Modal visible={isCameraOpen} animationType="slide">
-                        <Camera
-                            onPhotoTaken={handlePhotoTaken}
-                            onClose={() => setIsCameraOpen(false)}
-                        />
+                        <Camera onPhotoTaken={handlePhotoTaken} onClose={() => setIsCameraOpen(false)} />
                     </Modal>
                 </View>
-
-                {/* Cleared By Time Picker */}
+                {/* Cleared By */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Cleared By</Text>
                     <Controller
@@ -240,10 +249,7 @@ export default function Post() {
                         name="clearedby"
                         render={({ field: { onChange, value } }) => (
                             <>
-                                <TouchableOpacity
-                                    style={styles.selector}
-                                    onPress={() => setShowTimePicker(true)}
-                                >
+                                <TouchableOpacity style={styles.selector} onPress={() => setShowTimePicker(true)}>
                                     <Text style={styles.selectorText}>
                                         {value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </Text>
@@ -263,10 +269,11 @@ export default function Post() {
                         )}
                     />
                 </View>
-
-                {/* Leftover Slider */}
+                {/* Leftover */}
                 <View style={styles.sectionContainer}>
-                    <Text style={styles.sectionHeaderText}>Leftover Level ({photos.length}% Photos Uploaded)</Text>
+                    <Text style={styles.sectionHeaderText}>
+                        Leftover Level ({photos.length}% Photos)
+                    </Text>
                     <Controller
                         control={control}
                         name="leftover"
@@ -286,8 +293,7 @@ export default function Post() {
                         )}
                     />
                 </View>
-
-                {/* Additional Details */}
+                {/* Details */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Additional Details</Text>
                     <Controller
@@ -304,13 +310,8 @@ export default function Post() {
                         )}
                     />
                 </View>
-
-                {/* Submit Button */}
-                <Button
-                    title="Submit Buffet"
-                    onPress={handleSubmit(onSubmit)}
-                    color={theme.primary}
-                />
+                {/* Submit */}
+                <Button title="Submit Buffet" onPress={handleSubmit(onSubmit)} color={theme.primary} />
             </ScrollView>
         </SafeAreaView>
     );
