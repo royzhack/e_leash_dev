@@ -3,16 +3,18 @@ import {
     Avatars,
     Account,
     Client,
-    OAuthProvider, Databases,
+    OAuthProvider, Databases, Query, Storage, ID
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
+import * as FileSystem from "expo-file-system";
 export const config = {
     platform : 'com.roy.wasteless',
     endpoint : 'https://cloud.appwrite.io/v1',
     projectID: "6837256a001912254094",
     databaseId: '6842a4150011ed4c7211',
-    buffetcollectionID: '6842aa210006eafe1e09'
+    buffetcollectionID: '6842aa210006eafe1e09',
+    bucketID: '685387bd00305b201702'
 }
 
 export const client = new Client()
@@ -25,6 +27,9 @@ client
 export const avatar = new Avatars(client)
 export const account = new Account(client)
 export const databases = new Databases(client)
+export const storage = new Storage(client)
+
+
 
 
 export async function login() {
@@ -86,3 +91,40 @@ export async function getCurrentUser() {
         return null;
     }
 }
+
+export async function getLatestBuffets() {
+    try{
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.buffetcollectionID!,
+            [Query.orderAsc('clearedby'),
+                Query.limit(20)]
+        )
+        return result.documents;
+
+    }catch(error){
+        console.error(error)
+        return [];
+    }
+
+}
+
+export async function uploadfile(file, fileID) {
+    try {
+        const result = await storage.createFile(
+            config.bucketID, // bucketId
+            fileID, // fileId
+            file // file
+        );
+
+        console.log(result);
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+
+
+
+
+

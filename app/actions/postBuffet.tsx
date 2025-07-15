@@ -1,11 +1,16 @@
-import {databases} from '@/lib/appwrite'
+import {databases, uploadfile} from '@/lib/appwrite'
 import {ID} from "react-native-appwrite";
+import * as FileSystem from 'expo-file-system';
 
 // @ts-ignore
 export async function postBuffet(level: number, locationdetails:string,  clearedby: Date, leftover: number,
-                                 additionaldetails: string): Promise<Buffet> {
+                                 additionaldetails: string, userID: string, locationcoords: number[], locationname: string,
+                                 photofileID: string[]): Promise<Buffet> {
+
     const newBuffet = {level: level, locationdetails: locationdetails, clearedby: clearedby.toISOString(),
-                            leftover: leftover, additionaldetails: additionaldetails};
+                            leftover: leftover, additionaldetails: additionaldetails, locationname: locationname,
+                            userID: userID, locationcoordslat: locationcoords[0], locationcoordslong: locationcoords[1],
+                        photofileID: photofileID};
 
     try {
         const response = await databases.createDocument(
@@ -24,7 +29,12 @@ export async function postBuffet(level: number, locationdetails:string,  cleared
             additionaldetails: response.additionaldetails,
             level: response.level,
             locationdetails: response.locationdetails,
-            // buffetpics: response.buffetpics, // Only if in your schema/interface
+            locationname: response.locationname,
+            userID: response.userID,
+            locationcoordslat: response.locationcoordslat,
+            locationcoordslong: response.locationcoordslong,
+            photofileID: response.photofileID
+
             // nuslocation: response.nuslocation // Only if in your schema/interface
         };
 
@@ -34,3 +44,42 @@ export async function postBuffet(level: number, locationdetails:string,  cleared
         throw error;
     }
 }
+
+function getFileName(uri) {
+    return uri.substring(uri.lastIndexOf('/') + 1);
+}
+
+function getMimeType(fileName) {
+    const extension = fileName.split('.').pop().toLowerCase();
+    const mimeTypes = {
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif',
+        bmp: 'image/bmp',
+        webp: 'image/webp',
+    };
+    return mimeTypes[extension] || 'application/octet-stream';
+}
+
+async function getFileSize(uri) {
+    const fileInfo = await FileSystem.getInfoAsync(uri);
+    return fileInfo?.size;
+}
+
+export async function supplementPhoto(photo) {
+    // Ensure name
+    if (!photo.name) {
+        photo.name = getFileName(photo.uri);
+    }
+    // Ensure type
+    if (!photo.type) {
+        photo.type = getMimeType(photo.name);
+    }
+    // Ensure size (optional, but recommended)
+    if (!photo.size) {
+        photo.size = await getFileSize(photo.uri);
+    }
+    return photo;
+}
+

@@ -1,0 +1,1251 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "University Cultural Centre"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77220032684113,
+          1.301682743298059
+        ],
+        "type": "Point"
+      },
+      "id": 0
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Museum"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77361096133257,
+          1.3014792998732503
+        ],
+        "type": "Point"
+      },
+      "id": 1
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "EA"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77063299983291,
+          1.3002685500206042
+        ],
+        "type": "Point"
+      },
+      "id": 2
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E3A"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7714031278723,
+          1.3002944412765487
+        ],
+        "type": "Point"
+      },
+      "id": 3
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "EW1A"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77038611598562,
+          1.2994274258211505
+        ],
+        "type": "Point"
+      },
+      "id": 4
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E1A"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77080375509331,
+          1.299373896115469
+        ],
+        "type": "Point"
+      },
+      "id": 5
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E2A"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77115255258872,
+          1.2993234252480619
+        ],
+        "type": "Point"
+      },
+      "id": 6
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E3"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77174192968891,
+          1.299441324445624
+        ],
+        "type": "Point"
+      },
+      "id": 7
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E1"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77111748468741,
+          1.2987028891411256
+        ],
+        "type": "Point"
+      },
+      "id": 9
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "EW1"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77075418365729,
+          1.2985410965470692
+        ],
+        "type": "Point"
+      },
+      "id": 10
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SDE3"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77048872875508,
+          1.2979098867371732
+        ],
+        "type": "Point"
+      },
+      "id": 11
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SDE1"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77069873909869,
+          1.2973328600905063
+        ],
+        "type": "Point"
+      },
+      "id": 12
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SDE4"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77028823119315,
+          1.296797371363212
+        ],
+        "type": "Point"
+      },
+      "id": 13
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SDE2"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77114645734974,
+          1.2972716534823974
+        ],
+        "type": "Point"
+      },
+      "id": 14
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CELC"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77144324118422,
+          1.2969825928077796
+        ],
+        "type": "Point"
+      },
+      "id": 15
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Techno Edge"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77152882425213,
+          1.2979541640035421
+        ],
+        "type": "Point"
+      },
+      "id": 16
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E5"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7724439881984,
+          1.2979696907860045
+        ],
+        "type": "Point"
+      },
+      "id": 17
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E4"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77212578697419,
+          1.298534047088424
+        ],
+        "type": "Point"
+      },
+      "id": 18
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E4A"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77261838694614,
+          1.2986334594330629
+        ],
+        "type": "Point"
+      },
+      "id": 19
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E8"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77254737447726,
+          1.299142306362839
+        ],
+        "type": "Point"
+      },
+      "id": 20
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E5A"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7721373107297,
+          1.299711907792954
+        ],
+        "type": "Point"
+      },
+      "id": 21
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E6"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7730678290742,
+          1.2991769265773314
+        ],
+        "type": "Point"
+      },
+      "id": 22
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E7"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7733176614359,
+          1.2985849976143982
+        ],
+        "type": "Point"
+      },
+      "id": 23
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CLB (Central Library)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77300469380526,
+          1.2963979849924385
+        ],
+        "type": "Point"
+      },
+      "id": 24
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AS8"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7723119713682,
+          1.2960457367805986
+        ],
+        "type": "Point"
+      },
+      "id": 25
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AS6"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77313171649075,
+          1.2956073805930401
+        ],
+        "type": "Point"
+      },
+      "id": 26
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "COM1"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77383655641984,
+          1.2949649718815976
+        ],
+        "type": "Point"
+      },
+      "id": 27
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "COM3"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77455033056384,
+          1.2947007569193971
+        ],
+        "type": "Point"
+      },
+      "id": 28
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "COM4"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77536292674858,
+          1.2951272014096276
+        ],
+        "type": "Point"
+      },
+      "id": 29
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "i4.0 (Innovation 4)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77568371168633,
+          1.2945648895299797
+        ],
+        "type": "Point"
+      },
+      "id": 30
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Shaw Foundation Alumni House"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77364417124778,
+          1.2932522455447355
+        ],
+        "type": "Point"
+      },
+      "id": 31
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kent Ridge Guild House"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77262782935117,
+          1.2937830930774084
+        ],
+        "type": "Point"
+      },
+      "id": 32
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BIZ1"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77415866627877,
+          1.2924870575322984
+        ],
+        "type": "Point"
+      },
+      "id": 33
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HSSML (Hon Sui Sen Memorial Library)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77448514534507,
+          1.2930148467561509
+        ],
+        "type": "Point"
+      },
+      "id": 34
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "COM2"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77403826389121,
+          1.2939045347916789
+        ],
+        "type": "Point"
+      },
+      "id": 35
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BIZ2"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77490288922161,
+          1.2934597595211272
+        ],
+        "type": "Point"
+      },
+      "id": 36
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "i3 "
+      },
+      "geometry": {
+        "coordinates": [
+          103.77567052165665,
+          1.2923962576397656
+        ],
+        "type": "Point"
+      },
+      "id": 37
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "TCOMS (Technology Centre for Offshore and Marine)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77663375084973,
+          1.2931184963548503
+        ],
+        "type": "Point"
+      },
+      "id": 38
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Chinese Library"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77336200622466,
+          1.2970893370386278
+        ],
+        "type": "Point"
+      },
+      "id": 39
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Information Technology"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77251243601381,
+          1.2975256020279744
+        ],
+        "type": "Point"
+      },
+      "id": 40
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ventus"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77025535360843,
+          1.295357800566478
+        ],
+        "type": "Point"
+      },
+      "id": 41
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AS2"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77128501053113,
+          1.2952003456167063
+        ],
+        "type": "Point"
+      },
+      "id": 42
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AS1"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77227824589579,
+          1.2952384394051677
+        ],
+        "type": "Point"
+      },
+      "id": 43
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AS3"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77130787251684,
+          1.2947178220964162
+        ],
+        "type": "Point"
+      },
+      "id": 44
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Shaw Foundation Building"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7710295800893,
+          1.294360415437069
+        ],
+        "type": "Point"
+      },
+      "id": 45
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AS5"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7718433266748,
+          1.2942619906566932
+        ],
+        "type": "Point"
+      },
+      "id": 46
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AS4"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77187126938077,
+          1.2945794403807298
+        ],
+        "type": "Point"
+      },
+      "id": 47
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "YIH (Yusof Ishak House)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77486391078384,
+          1.2984633751593861
+        ],
+        "type": "Point"
+      },
+      "id": 48
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "USC (University Sports Centre)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77548292638033,
+          1.2996873476031965
+        ],
+        "type": "Point"
+      },
+      "id": 49
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MPSH 6"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77572498976724,
+          1.3003040842272071
+        ],
+        "type": "Point"
+      },
+      "id": 50
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MPSH 5"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77628198113678,
+          1.3003325363124674
+        ],
+        "type": "Point"
+      },
+      "id": 51
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MPSH 1-4"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77591200876765,
+          1.3007877696169885
+        ],
+        "type": "Point"
+      },
+      "id": 52
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MPSHs (centre area)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77598112448419,
+          1.300515442559913
+        ],
+        "type": "Point"
+      },
+      "id": 53
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "ERC (Education Resource Centre)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77284279432945,
+          1.3058824138649783
+        ],
+        "type": "Point"
+      },
+      "id": 54
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "UTown Stephen Riady Centre"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77234547425911,
+          1.3047661095129257
+        ],
+        "type": "Point"
+      },
+      "id": 55
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "UTown Town Plaza (near bus stop)"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77397334637669,
+          1.3038696573921698
+        ],
+        "type": "Point"
+      },
+      "id": 56
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "University Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77765895822591,
+          1.2971410550806013
+        ],
+        "type": "Point"
+      },
+      "id": 57
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S1"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77787708693876,
+          1.2957722880256028
+        ],
+        "type": "Point"
+      },
+      "id": 58
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S2"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7780396261735,
+          1.295529791492271
+        ],
+        "type": "Point"
+      },
+      "id": 59
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S3"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77864727284538,
+          1.2955822907438517
+        ],
+        "type": "Point"
+      },
+      "id": 60
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S4"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7791899038246,
+          1.2956147902794584
+        ],
+        "type": "Point"
+      },
+      "id": 61
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S5"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77974253721811,
+          1.2954597924887565
+        ],
+        "type": "Point"
+      },
+      "id": 62
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S6"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78025015974748,
+          1.2950947976535616
+        ],
+        "type": "Point"
+      },
+      "id": 63
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S7"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77891718893068,
+          1.2963180322925325
+        ],
+        "type": "Point"
+      },
+      "id": 64
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S8"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77934229154096,
+          1.2961255350879384
+        ],
+        "type": "Point"
+      },
+      "id": 65
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S9"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77996244123221,
+          1.2959080382290722
+        ],
+        "type": "Point"
+      },
+      "id": 66
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S10"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77971488147642,
+          1.2963130323653758
+        ],
+        "type": "Point"
+      },
+      "id": 67
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S11"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77876215150826,
+          1.2966480274663041
+        ],
+        "type": "Point"
+      },
+      "id": 68
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S12"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77868463279628,
+          1.2969805225599629
+        ],
+        "type": "Point"
+      },
+      "id": 69
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S13"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7792722746396,
+          1.296750525958842
+        ],
+        "type": "Point"
+      },
+      "id": 70
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S14"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77976739415118,
+          1.296858024372483
+        ],
+        "type": "Point"
+      },
+      "id": 71
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S15"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78024751004148,
+          1.2971355202575268
+        ],
+        "type": "Point"
+      },
+      "id": 72
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S16"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78035361903653,
+          1.2967996515839815
+        ],
+        "type": "Point"
+      },
+      "id": 73
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "S17"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78052287117862,
+          1.2977134033133098
+        ],
+        "type": "Point"
+      },
+      "id": 74
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD1"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78055875336327,
+          1.2953733766591427
+        ],
+        "type": "Point"
+      },
+      "id": 75
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD2"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78119390667422,
+          1.29491588310907
+        ],
+        "type": "Point"
+      },
+      "id": 76
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD3"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78114389460302,
+          1.2953383771558435
+        ],
+        "type": "Point"
+      },
+      "id": 77
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD4"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78094384665314,
+          1.2957358707406854
+        ],
+        "type": "Point"
+      },
+      "id": 78
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD4A"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78085382492333,
+          1.295613372493051
+        ],
+        "type": "Point"
+      },
+      "id": 79
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD5"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78141896133621,
+          1.2956408720997814
+        ],
+        "type": "Point"
+      },
+      "id": 80
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD6"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78175654282023,
+          1.2952908770782017
+        ],
+        "type": "Point"
+      },
+      "id": 81
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD7"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78115999334688,
+          1.2960370183038634
+        ],
+        "type": "Point"
+      },
+      "id": 82
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD11"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78180014786659,
+          1.296007018736745
+        ],
+        "type": "Point"
+      },
+      "id": 83
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD10"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78180764967732,
+          1.296502011542401
+        ],
+        "type": "Point"
+      },
+      "id": 84
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MD9"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7813025277515,
+          1.2967070085343408
+        ],
+        "type": "Point"
+      },
+      "id": 85
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Med Science Library"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78183824981068,
+          1.296904493292601
+        ],
+        "type": "Point"
+      },
+      "id": 86
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Centre for Life Sciences"
+      },
+      "geometry": {
+        "coordinates": [
+          103.7808111705545,
+          1.2944313555974247
+        ],
+        "type": "Point"
+      },
+      "id": 87
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DSO @ Kent Ridge"
+      },
+      "geometry": {
+        "coordinates": [
+          103.78143734864284,
+          1.296253327868783
+        ],
+        "type": "Point"
+      },
+      "id": 88
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Frontier/ C4"
+      },
+      "geometry": {
+        "coordinates": [
+          103.77979455688825,
+          1.2963873255310716
+        ],
+        "type": "Point"
+      },
+      "id": 89
+    }
+  ]
+}
