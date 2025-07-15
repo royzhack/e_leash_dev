@@ -18,8 +18,8 @@ import { Soup } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
 import { AntDesign } from '@expo/vector-icons';
-import Camera from '@/app/(root)/(tabs)/camera';
-import {postBuffet, postPhoto, supplementPhoto} from '@/app/actions/postBuffet';
+import Camera from '@/app/actions/camera';
+import {postBuffet, supplementPhoto} from '@/app/actions/postBuffet';
 import { useGlobalContext } from '@/lib/global-provider';
 import locations from '@/assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -28,6 +28,7 @@ import geojsonData from '@/assets/NUSLocations/map.json';
 import { Client, ID, Storage } from 'react-native-appwrite';
 import * as FileSystem from 'expo-file-system';
 import {uploadfile} from "@/lib/appwrite";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 // Theme colors
 const theme = {
@@ -115,7 +116,7 @@ export default function Post() {
             // Submit buffet post
             const result = await postBuffet(
                 data.level,
-                '',
+                data.locationdetails,
                 data.clearedby,
                 data.leftover,
                 data.additionaldetails,
@@ -138,7 +139,7 @@ export default function Post() {
                 <Text style={[styles.title, { color: theme.primary }]}>New Buffet</Text>
                 <Soup size={24} color={theme.primary} />
             </View>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <KeyboardAwareScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Location Dropdown */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Location</Text>
@@ -188,6 +189,24 @@ export default function Post() {
                         )}
                     />
                     {errors.level && <Text style={styles.errorText}>Level is required.</Text>}
+                </View>
+
+                {/* Location details */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Location details</Text>
+                    <Controller
+                        control={control}
+                        name="locationdetails"
+                        render={({ field: { onChange, value } }) => (
+                            <TextInput
+                                style={styles.textInput}
+                                placeholder="Nearby landmarks (eg. parking lots/ benches, etc)"
+                                multiline
+                                value={value}
+                                onChangeText={onChange}
+                            />
+                        )}
+                    />
                 </View>
 
                 {/* Photo gallery and camera modal */}
@@ -261,7 +280,7 @@ export default function Post() {
 
                 {/* Leftover Slider */}
                 <View style={styles.sectionContainer}>
-                    <Text style={styles.sectionHeaderText}>Leftover Level ({photos.length}% Photos Uploaded)</Text>
+                    <Text style={styles.sectionHeaderText}>Amount leftover</Text>
                     <Controller
                         control={control}
                         name="leftover"
@@ -283,7 +302,7 @@ export default function Post() {
                 </View>
 
                 {/* Additional Details */}
-                <SafeAreaView style={styles.sectionContainer}>
+                <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Additional Details</Text>
                     <Controller
                         control={control}
@@ -298,7 +317,7 @@ export default function Post() {
                             />
                         )}
                     />
-                </SafeAreaView>
+                </View>
 
                 {/* Submit Button */}
                 <Button
@@ -306,7 +325,7 @@ export default function Post() {
                     onPress={handleSubmit(onSubmit)}
                     color={theme.primary}
                 />
-            </ScrollView>
+            </KeyboardAwareScrollView>
         </SafeAreaView>
     );
 }
