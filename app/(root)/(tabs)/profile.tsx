@@ -5,9 +5,9 @@ import {
     Text,
     TouchableOpacity,
     View,
-    ImageSourcePropType
+    ImageSourcePropType, Modal, StyleSheet, ActivityIndicator, FlatList
 } from "react-native"; //added Image Source Prop Type, but didnt use it
-import { logout } from "@/lib/appwrite";
+import {getUsersBuffets, logout} from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
 import { Image } from "react-native";
 import {
@@ -18,8 +18,10 @@ import {
     UtensilsCrossed,
     Salad
 } from "lucide-react-native";
+import React, {useEffect, useState} from "react";
+import {Buffet} from '../../../types'
 
-// ---------- Settings Item Component ----------
+
 interface SettingsItemProp { //this is necessary to define the arguments of each function and their datatype
     icon: React.ElementType;
     title: string;
@@ -52,9 +54,12 @@ const SettingsItem = ({ //creating the settings function itself
     </TouchableOpacity>
 );
 
-// ---------- Profile Screen ----------
+
 const Profile = () => {// assembling the page itself
     const { user, refetch } = useGlobalContext();
+    const [activeBuffetvisible, setActiveBuffetvisible] = useState(false);
+    const [usersBuffets, setUsersBuffets] = useState<Buffet[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const handleLogout = async () => { //creating logout logic/function
         const result = await logout();
@@ -65,6 +70,46 @@ const Profile = () => {// assembling the page itself
             Alert.alert("Error", "Failed to logout");
         }
     };
+    useEffect(() => {
+        (async () => {
+            try {
+                console.log("UserID:", userID);
+                setLoading(true);
+                const buffets = await getUsersBuffets(userID);
+                console.log('buffets', buffets);
+                setUsersBuffets(buffets);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        })
+        ();
+
+    }, []);
+
+    if (loading) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
+
+    const userID = user?.$id;
+
+    const closeActiveBuffetModal = () => {
+        setActiveBuffetvisible(false); // close the modal
+        console.log("modal closed");
+    };
+
+    const openActiveBuffetModal = () => {
+        setActiveBuffetvisible(true);
+    }
+
+    const levelfix = (level: number) =>
+        level < 0 ? `B${-level}` : level;
+
 
     return ( //what u want it to show so u return
         <SafeAreaView className="h-full bg-white"> {/*first wrap everything in a safe area view*/ }
@@ -94,10 +139,49 @@ const Profile = () => {// assembling the page itself
                     </View>
                 </View>
 
-                {/* First section WE CAN ADD A */}
                 <View className="flex flex-col mt-10">
-                    <SettingsItem icon={Salad} title="Active Buffets" />
-                    <SettingsItem icon={UtensilsCrossed} title="Past Buffets" />
+                    <SettingsItem icon={Salad} title="Active Buffets" onPress={openActiveBuffetModal}/>
+                       <Modal
+                        visible={activeBuffetvisible}
+                        animationType="slide"
+                        transparent={true}
+                        onRequestClose={closeActiveBuffetModal}
+                       >
+                           <View style={styles.modalOverlay}>
+                               <View style={styles.modalContent}>
+                                   <View className = "mt-4 py-4">
+                                       <TouchableOpacity onPress={closeActiveBuffetModal} style={styles.closeButton}>
+                                           <Text style={styles.closeButtonText}>X</Text>
+                                       </TouchableOpacity>
+                                   </View>
+                                    <Text style = {styles.heading}>Currently Active Buffets</Text>
+                                   <FlatList
+                                       data={usersBuffets}
+                                       keyExtractor={item => item.$id}
+                                       contentContainerStyle={{ paddingVertical: 16 }}
+                                       renderItem={({ item }) => (
+                                               <View style={styles.card}>
+                                                   <Text style={styles.title}>
+                                                       Level: {levelfix(item.level)}
+                                                   </Text>
+                                                   <Text>Leftover: {item.leftover}%</Text>
+                                                   <Text>Location: {item.locationname}</Text>
+                                                   <Text>Details: {item.additionaldetails || '—'}</Text>
+                                                   <Text>
+                                                       Cleared by:{' '}
+                                                       {new Date(item.clearedby).toLocaleString('en-SG', {
+                                                           dateStyle: 'medium', timeStyle: 'short',
+                                                       })}
+                                                   </Text>
+                                               </View>
+                                       )}
+                                   />
+                               </View>
+                           </View>
+
+                       </Modal>
+                    <SettingsItem icon={UtensilsCrossed} title="Past Buffets"/>
+
                 </View>
 
 
@@ -118,3 +202,59 @@ const Profile = () => {// assembling the page itself
 };
 
 export default Profile;
+
+const styles = StyleSheet.create({
+    container: { flex: 1, padding: 16, paddingTop: 40 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    heading: { fontSize: 24, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
+    count: { fontSize: 16, marginBottom: 12, textAlign: 'center' },
+    card: {
+        padding: 12,
+        marginBottom: 12,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+    },
+    title: { fontSize: 18, fontWeight: '700' },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        height: '75%', // Modal covers 3/4 of the screen
+    },
+    modalContentScroll: {
+        flexGrow: 1,
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 5,
+        right: 5,
+        backgroundColor: 'red',
+        borderRadius: 12,
+        padding: 5,
+    },
+    closeButtonText: {
+        color: 'white',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    image: {
+        width: 200,
+        height: 200,
+        borderRadius: 10,
+        marginVertical: 20,
+    },
+    text: {
+        fontSize: 16,
+        marginVertical: 10,
+    },
+    details: {
+        fontSize: 18,
+        marginBottom: 20,
+    },
+});
