@@ -109,6 +109,20 @@ export async function getLatestBuffets() {
 
 }
 
+export async function getUsersBuffets(userID) {
+    try {
+        const result = await databases.listDocuments(
+            config.databaseId,
+            config.buffetcollectionID,
+            [Query.equal('userID', userID)]
+        );
+        return result.documents;
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
 export async function uploadfile(file, fileID) {
     try {
         const result = await storage.createFile(

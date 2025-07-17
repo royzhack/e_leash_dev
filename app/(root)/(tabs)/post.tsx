@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     View,
     Text,
@@ -30,6 +30,7 @@ import * as FileSystem from 'expo-file-system';
 import {uploadfile} from "@/lib/appwrite";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
+
 // Theme colors
 const theme = {
     primary: '#0061FF',
@@ -53,9 +54,23 @@ const LEVELS = [
 // GeoJSON helper
 const locationfind = id => geojsonData.features.find(x => x.id === id);
 
+//timechecker
+function timecheck (value, timediffMins: number): boolean {
+    if (!value) {
+        return false;
+    }
+    const input = new Date(value);
+    if (isNaN(input.getTime())) {
+        return false;
+    }
+    const now = new Date();
+    console.log(value, typeof value, value instanceof Date);
+    return input - now >= timediffMins * 60 * 1000;
+}
+
 export default function Post() {
     const user = useGlobalContext().user;
-    const { control, handleSubmit, formState: { errors } } = useForm({
+    const { control, handleSubmit, formState: { errors, isSubmitSuccessful }, reset } = useForm({
         defaultValues: {
             location: null,
             level: LEVELS[4].label,
@@ -74,6 +89,19 @@ export default function Post() {
     // Time picker
     const [showTimePicker, setShowTimePicker] = useState(false);
 
+    useEffect(() => {
+        if (isSubmitSuccessful) {
+            // Reset form fields to default values
+            reset();
+
+            // reset the other usestates
+            setPhotos([]);
+            setShowTimePicker(false);
+            setIsCameraOpen(false);
+
+        }
+    }, [isSubmitSuccessful, reset]);
+
     const onSubmit = async data => {
         // Basic validation
         if (!data.location) {
@@ -81,6 +109,7 @@ export default function Post() {
             return;
         }
         console.log(photos.length);
+
         if (photos.length === 0) {
             Alert.alert('Validation', 'Please take at least one photo');
             return;
@@ -252,6 +281,17 @@ export default function Post() {
                     <Controller
                         control={control}
                         name="clearedby"
+                        rules = {{required: true, validate: (value) => {
+                                const valid = timecheck(value, 10);
+                                if (!valid) {
+                                    //Alert.alert("Invalid Cleared-by Time", "Buffet cannot be cleared in less than 10 minutes");
+                                    // Returning the same message lets it show as a field error too
+                                    return "Buffet cannot be cleared in less than 10 minutes";
+                                }
+                                return true;
+                            }
+                            }
+                    }
                         render={({ field: { onChange, value } }) => (
                             <>
                                 <TouchableOpacity
@@ -276,6 +316,9 @@ export default function Post() {
                             </>
                         )}
                     />
+                    {errors.clearedby && (
+                        <Text style={styles.errorText}>{errors.clearedby.message}</Text>
+                    )}
                 </View>
 
                 {/* Leftover Slider */}

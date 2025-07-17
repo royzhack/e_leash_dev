@@ -2,7 +2,7 @@ import { View, Text } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import * as Location from 'expo-location'
 
-export default function GetLocation() {
+export default function getLocation() {
     const [location, setLocation] = useState({
         latitude: null,
         longitude: null,
@@ -48,6 +48,29 @@ export default function GetLocation() {
     }, [])
 
 }
+
+
+
+
+//  Haversine formula util
+export default function calculateDistance(
+    lat1: number, lon1: number,
+    lat2: number, lon2: number
+): number {
+    const toRad = (deg: number) => deg * (Math.PI / 180);
+    const R = 6_371_000; // meters
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) ** 2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 
 
 

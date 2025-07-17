@@ -15,6 +15,11 @@ export default interface Buffet {
     distance?: number
 }
 
+export type UserLocation = {
+    latitude: number;
+    longitude: number;
+};
+
 // declare module '*.geojson' {
 //     const value: any;
 //     export default value;

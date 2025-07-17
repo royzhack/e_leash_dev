@@ -1,6 +1,7 @@
 import {databases, uploadfile} from '@/lib/appwrite'
 import {ID} from "react-native-appwrite";
 import * as FileSystem from 'expo-file-system';
+import {Buffet} from '../../types'
 
 // @ts-ignore
 export async function postBuffet(level: number, locationdetails:string,  clearedby: Date, leftover: number,

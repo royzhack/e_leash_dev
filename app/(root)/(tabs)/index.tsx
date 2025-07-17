@@ -13,82 +13,12 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import {getFileMini, getLatestBuffets} from '@/lib/appwrite';
-import GetLocation from '@/app/actions/getlocation';
-
-// --- 1. Types ---
-export interface Buffet {
-    $id: string;
-    $createdAt: string;
-    clearedby: Date;
-    leftover: number;
-    additionaldetails: string;
-    level: number;
-    locationdetails: string;
-    locationname: string;
-    userID: string;
-    locationcoordslat: number;
-    locationcoordslong: number;
-
-    /** computed on-the-fly */
-    distance?: number;
-}
-
-type UserLocation = {
-    latitude: number;
-    longitude: number;
-};
-
-// --- 2. Hook to watch user location ---
-function useUserLocation(): UserLocation | null { // function to get UserLocation object (with latitude and longitude) or null if we haven’t got location yet.
-    const [location, setLocation] = useState<UserLocation | null>(null); //create a state location and set it take either User location and null <UserLocation | null> this tell you that the state can only hold these two objects , so (null) tells us that its intital value is null
+import {Buffet, UserLocation} from '../../../types'
+import calculateDistance from "@/app/actions/locationfunctions";
 
 
-    useEffect(() => {
-        let subscriber: Location.LocationSubscription;
 
-        (async () => {
-            const { status } = await Location.requestForegroundPermissionsAsync(); //ask for permission to access location/
-            if (status !== 'granted') { //if permission is denied
-                console.warn('Location permission denied');
-                return;
-            }
-            subscriber = await Location.watchPositionAsync( //start watching location and update subscriber with the location
-                { accuracy: Location.Accuracy.High, distanceInterval: 5 }, //accuracy is high and distance interval is 5 meters
-                (loc) => {
-                    setLocation({
-                        latitude: loc.coords.latitude,
-                        longitude: loc.coords.longitude,
-                    });
-                }
-            );
-        })();
 
-        return () => subscriber?.remove();
-    }, []);
-
-    return location; //return the state location, last position of the user
-}
-
-// --- 3. Haversine formula util ---
-function calculateDistance(
-    lat1: number, lon1: number,
-    lat2: number, lon2: number
-): number {
-    const toRad = (deg: number) => deg * (Math.PI / 180);
-    const R = 6_371_000; // meters
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-
-    const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) ** 2;
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
-
-// --- 4. Main screen ---
 export default function Index() {
     //GetLocation();
     const userLocation = useUserLocation();
@@ -99,7 +29,7 @@ export default function Index() {
     const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null); // 2. State to hold selected buffet
     const [imgUrls, setImgUrls] = useState<Record<string, string>>({});
 
-    // 4.1 Fetch from Appwrite on mount
+    //  Fetch from Appwrite on mount
     useEffect(() => {
         (async () => {
             try {
@@ -124,7 +54,7 @@ export default function Index() {
         })();
     }, []);
 
-    // 4.2 Recompute distances whenever location or buffets change
+    //  Recompute distances whenever location or buffets change
     useEffect(() => {
         if (!userLocation || rawBuffets.length === 0) return;
 
@@ -151,16 +81,47 @@ export default function Index() {
         );
     }
 
+
+    function useUserLocation(): UserLocation | null { // function to get UserLocation object (with latitude and longitude) or null if we haven’t got location yet.
+        const [location, setLocation] = useState<UserLocation | null>(null); //create a state location and set it take either User location and null <UserLocation | null> this tell you that the state can only hold these two objects , so (null) tells us that its intital value is null
+
+
+        useEffect(() => {
+            let subscriber: Location.LocationSubscription;
+
+            (async () => {
+                const { status } = await Location.requestForegroundPermissionsAsync(); //ask for permission to access location/
+                if (status !== 'granted') { //if permission is denied
+                    console.warn('Location permission denied');
+                    return;
+                }
+                subscriber = await Location.watchPositionAsync( //start watching location and update subscriber with the location
+                    { accuracy: Location.Accuracy.High, distanceInterval: 5 }, //accuracy is high and distance interval is 5 meters
+                    (loc) => {
+                        setLocation({
+                            latitude: loc.coords.latitude,
+                            longitude: loc.coords.longitude,
+                        });
+                    }
+                );
+            })();
+
+            return () => subscriber?.remove();
+        }, []);
+
+        return location; //return the state location, last position of the user
+    }
+
     const levelfix = (level: number) =>
         level < 0 ? `B${-level}` : level;
 
-    // 4.3 Open modal with selected buffet details
+    //  Open modal with selected buffet details
     const openModal = (buffet: Buffet) => {
         setSelectedBuffet(buffet); // set the selected buffet
         setModalVisible(true); // open the modal
     };
 
-    // 4.4 Close modal
+    //  Close modal
     const closeModal = () => {
         setModalVisible(false); // close the modal
         setSelectedBuffet(null); // reset the selected buffet
@@ -234,7 +195,7 @@ export default function Index() {
     );
 }
 
-// --- 5. Styles ---
+
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 16, paddingTop: 40 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
