@@ -1,5 +1,4 @@
-// app/screens/Index.tsx
-import React, { useEffect, useState } from 'react'; //
+import React, { useEffect, useState } from 'react';
 import {
     Text,
     View,
@@ -9,94 +8,71 @@ import {
     StyleSheet,
     Modal,
     ScrollView,
-    TouchableOpacity
+    TouchableOpacity,
+    Image,
 } from 'react-native';
 import * as Location from 'expo-location';
-import {getFileMini, getLatestBuffets} from '@/lib/appwrite';
-import {Buffet, UserLocation} from '../../../types'
-import calculateDistance from "@/app/actions/locationfunctions";
-
-
-
+import { getLatestBuffets } from '@/lib/appwrite';
+import { Buffet, UserLocation } from '../../../types';
+import calculateDistance from '@/app/actions/locationfunctions';
 
 export default function Index() {
-    //GetLocation();
     const userLocation = useUserLocation();
     const [rawBuffets, setRawBuffets] = useState<Buffet[]>([]);
     const [buffets, setBuffets] = useState<Buffet[]>([]);
     const [loading, setLoading] = useState(true);
-    const [modalVisible, setModalVisible] = useState(false); // 1. State to control modal visibility
-    const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null); // 2. State to hold selected buffet
-    const [imgUrls, setImgUrls] = useState<Record<string, string>>({});
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null);
 
-    //  Fetch from Appwrite on mount
+    // Fetch from Appwrite on mount
     useEffect(() => {
         (async () => {
             try {
                 setLoading(true);
                 const docs = await getLatestBuffets();
                 setRawBuffets(docs);
-                const newImgUrls: Record<string, string> = {};
-                for (const buffet of docs) {
-                    const fileId = buffet.photofileID[1]; // assuming 'uri' is the file ID in Appwrite
-                    const url = await getFileMini(fileId); // get the mini preview URL
-                    newImgUrls[buffet.$id] = url; // save the URL by the buffet ID
-                }
-
-                setImgUrls(newImgUrls);
-                console.log(imgUrls)
+                setBuffets(docs); // Temporarily before distance is calculated
             } catch (error) {
                 console.error(error);
             } finally {
-            setLoading(false);
-        }
-
+                setLoading(false);
+            }
         })();
     }, []);
 
-    //  Recompute distances whenever location or buffets change
+    // Recompute distances
     useEffect(() => {
         if (!userLocation || rawBuffets.length === 0) return;
 
-        const withDistance = rawBuffets // rawBuffets hold all the  buffets after getting them
-            .map(b => ({ // map each buffet to a new object with distance
+        const withDistance = rawBuffets
+            .map((b) => ({
                 ...b,
                 distance: calculateDistance(
                     userLocation.latitude,
                     userLocation.longitude,
                     b.locationcoordslong,
                     b.locationcoordslat
-                )
+                ),
             }))
-            .sort((a, b) => (a.distance! - b.distance!)); // sort by distance, ascending order/
+            .sort((a, b) => a.distance! - b.distance!);
 
-        setBuffets(withDistance); // set buffets to the new value with distance computed
-    }, [userLocation, rawBuffets]); // only recompute when user location or buffets change/ power of useEffect
+        setBuffets(withDistance);
+    }, [userLocation, rawBuffets]);
 
-    if (loading) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator size="large" />
-            </View>
-        );
-    }
-
-
-    function useUserLocation(): UserLocation | null { // function to get UserLocation object (with latitude and longitude) or null if we haven’t got location yet.
-        const [location, setLocation] = useState<UserLocation | null>(null); //create a state location and set it take either User location and null <UserLocation | null> this tell you that the state can only hold these two objects , so (null) tells us that its intital value is null
-
+    function useUserLocation(): UserLocation | null {
+        const [location, setLocation] = useState<UserLocation | null>(null);
 
         useEffect(() => {
             let subscriber: Location.LocationSubscription;
 
             (async () => {
-                const { status } = await Location.requestForegroundPermissionsAsync(); //ask for permission to access location/
-                if (status !== 'granted') { //if permission is denied
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
                     console.warn('Location permission denied');
                     return;
                 }
-                subscriber = await Location.watchPositionAsync( //start watching location and update subscriber with the location
-                    { accuracy: Location.Accuracy.High, distanceInterval: 5 }, //accuracy is high and distance interval is 5 meters
+                subscriber = await Location.watchPositionAsync(
+                    { accuracy: Location.Accuracy.High, distanceInterval: 5 },
                     (loc) => {
                         setLocation({
                             latitude: loc.coords.latitude,
@@ -109,23 +85,28 @@ export default function Index() {
             return () => subscriber?.remove();
         }, []);
 
-        return location; //return the state location, last position of the user
+        return location;
     }
 
-    const levelfix = (level: number) =>
-        level < 0 ? `B${-level}` : level;
+    const levelfix = (level: number) => (level < 0 ? `B${-level}` : level);
 
-    //  Open modal with selected buffet details
     const openModal = (buffet: Buffet) => {
-        setSelectedBuffet(buffet); // set the selected buffet
-        setModalVisible(true); // open the modal
+        setSelectedBuffet(buffet);
+        setModalVisible(true);
     };
 
-    //  Close modal
     const closeModal = () => {
-        setModalVisible(false); // close the modal
-        setSelectedBuffet(null); // reset the selected buffet
+        setModalVisible(false);
+        setSelectedBuffet(null);
     };
+
+    if (loading) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -136,54 +117,74 @@ export default function Index() {
 
             <FlatList
                 data={buffets}
-                keyExtractor={item => item.$id}
+                keyExtractor={(item) => item.$id}
                 contentContainerStyle={{ paddingVertical: 16 }}
                 renderItem={({ item }) => (
                     <TouchableOpacity onPress={() => openModal(item)}>
                         <View style={styles.card}>
-                            <Text style={styles.title}>
-                                Level: {levelfix(item.level)}
-                            </Text>
+                            <Text style={styles.title}>Level: {levelfix(item.level)}</Text>
                             <Text>Leftover: {item.leftover}%</Text>
                             <Text>Location: {item.locationname}</Text>
+
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+                                {item.photofileID.map((id) => (
+                                    <Image
+                                        key={id}
+                                        source={{
+                                            uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
+                                        }}
+                                        style={styles.image}
+                                    />
+                                ))}
+                            </ScrollView>
+
                             <Text>Details: {item.additionaldetails || '—'}</Text>
                             <Text>
                                 Cleared by:{' '}
                                 {new Date(item.clearedby).toLocaleString('en-SG', {
-                                    dateStyle: 'medium', timeStyle: 'short',
+                                    dateStyle: 'medium',
+                                    timeStyle: 'short',
                                 })}
                             </Text>
+                            <Text>Photo File IDs: {item.photofileID.join(', ')}</Text>
                             {item.distance != null && (
-                                <Text>
-                                    Distance: {item.distance.toFixed(0)} m
-                                </Text>
+                                <Text>Distance: {item.distance.toFixed(0)} m</Text>
                             )}
                         </View>
                     </TouchableOpacity>
                 )}
             />
 
-            {/* Modal for displaying buffet details */}
-            <Modal
-                visible={modalVisible}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={closeModal}
-            >
+            {/* Buffet Details Modal */}
+            <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <ScrollView contentContainerStyle={styles.modalContentScroll}>
                             <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                                 <Text style={styles.closeButtonText}>X</Text>
                             </TouchableOpacity>
+
                             {selectedBuffet && (
                                 <>
                                     <Text style={styles.title}>Buffet Details</Text>
-                                    <Text style={styles.text}>Here are the additional details of the buffet.</Text>
+
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+                                        {selectedBuffet.photofileID.map((id) => (
+                                            <Image
+                                                key={id}
+                                                source={{
+                                                    uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
+                                                }}
+                                                style={styles.image}
+                                            />
+                                        ))}
+                                    </ScrollView>
+
                                     <Text style={styles.details}>
-                                        Leftover: {selectedBuffet.leftover}% {"\n"}
-                                        Level: {levelfix(selectedBuffet.level)} {"\n"}
-                                        Location: {selectedBuffet.locationname}
+                                        Leftover: {selectedBuffet.leftover}%{'\n'}
+                                        Level: {levelfix(selectedBuffet.level)}{'\n'}
+                                        Location: {selectedBuffet.locationname}{'\n'}
+                                        Details: {selectedBuffet.additionaldetails || '—'}
                                     </Text>
                                 </>
                             )}
@@ -195,7 +196,6 @@ export default function Index() {
     );
 }
 
-
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 16, paddingTop: 40 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -203,51 +203,51 @@ const styles = StyleSheet.create({
     count: { fontSize: 16, marginBottom: 12, textAlign: 'center' },
     card: {
         padding: 12,
-        marginBottom: 12,
+        marginBottom: 16,
         borderRadius: 8,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#f9f9f9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
-    title: { fontSize: 18, fontWeight: '700' },
+    title: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
+    imageScroll: { marginVertical: 10 },
+    image: {
+        width: 200,
+        height: 200,
+        borderRadius: 10,
+        marginRight: 10,
+        backgroundColor: '#ddd',
+    },
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        backgroundColor: 'white',
+        backgroundColor: '#fff',
         padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        height: '75%', // Modal covers 3/4 of the screen
+        height: '80%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 10,
     },
-    modalContentScroll: {
-        flexGrow: 1,
-    },
+    modalContentScroll: { flexGrow: 1 },
     closeButton: {
         position: 'absolute',
         top: 10,
         right: 10,
-        backgroundColor: 'red',
+        backgroundColor: '#ff5b5b',
         borderRadius: 15,
         padding: 10,
+        zIndex: 10,
     },
-    closeButtonText: {
-        color: 'white',
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    image: {
-        width: 200,
-        height: 200,
-        borderRadius: 10,
-        marginVertical: 20,
-    },
-    text: {
-        fontSize: 16,
-        marginVertical: 10,
-    },
-    details: {
-        fontSize: 18,
-        marginBottom: 20,
-    },
+    closeButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+    details: { fontSize: 16, lineHeight: 24, marginTop: 12 },
 });
