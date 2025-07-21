@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -18,18 +18,23 @@ import { Soup } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
 import { AntDesign } from '@expo/vector-icons';
-import Camera from '@/app/actions/camera';
-import {postBuffet, supplementPhoto} from '@/app/actions/buffetActions';
-import { useGlobalContext } from '@/lib/global-provider';
-import locations from '@/assets/NUSLocations/locations';
+import Camera from './camera';
+import { postBuffet, supplementPhoto } from './buffetActions';
+
+import locations from '../../assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
-import geojsonData from '@/assets/NUSLocations/map.json';
-// Appwrite SDK imports
+import geojsonData from '../../assets/NUSLocations/map.json';
 import { Client, ID, Storage } from 'react-native-appwrite';
 import * as FileSystem from 'expo-file-system';
-import {uploadfile} from "@/lib/appwrite";
+import { updateFullBuffet, uploadfile } from '../../lib/appwrite';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import {timecheck} from '../../actions/timefunctions'
+import { timecheck } from './timefunctions';
+import Buffet from '../../types';
+import Index from '../(root)/(tabs)/index';
+import { useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
+
+
 
 // Theme colors
 const theme = {
@@ -51,28 +56,38 @@ const LEVELS = [
     { label: 'B3', value: -3 }
 ];
 
+const findLevel = (level:number) => {
+    for (let i = 0; i < LEVELS.length; i++) {
+        if (level === LEVELS[i].value) {
+            return LEVELS[i].value;
+        }
+    }
+}
+
 // GeoJSON helper
 const locationfind = id => geojsonData.features.find(x => x.id === id);
+const locationfindWithName = name => locations.find((x) => x.label === name);
 
 
+export default function EditBuffet() {
 
-export default function Post() {
-    const user = useGlobalContext().user;
+    const params = useLocalSearchParams();
+    const buffet = params.buffet ? JSON.parse(params.buffet) : null;
+
+    const router = useRouter(); //to allow users to navigate back
+
+
     const { control, handleSubmit, formState: { errors, isSubmitSuccessful }, reset } = useForm({
         defaultValues: {
-            location: null,
-            level: LEVELS[6].label,
-            clearedby: new Date(),
-            leftover: 0,
-            additionaldetails: ''
+            location: locationfindWithName(buffet.locationname).value,
+            level: findLevel(buffet.level),
+            clearedby: new Date(buffet.clearedby),
+            leftover: buffet.leftover,
+            additionaldetails: buffet.additionaldetails,
         }
     });
 
-    // Photo state
-    const [isCameraOpen, setIsCameraOpen] = useState(false);
-    const [photos, setPhotos] = useState([]);
-    const handlePhotoTaken = img => setPhotos(p => [...p, img]);
-    const removePhoto = idx => setPhotos(p => p.filter((_, i) => i !== idx));
+
 
     // Time picker
     const [showTimePicker, setShowTimePicker] = useState(false);
@@ -83,10 +98,7 @@ export default function Post() {
             reset();
 
             // reset the other usestates
-            setPhotos([]);
             setShowTimePicker(false);
-            setIsCameraOpen(false);
-
         }
     }, [isSubmitSuccessful, reset]);
 
@@ -96,12 +108,7 @@ export default function Post() {
             Alert.alert('Validation', 'Please select a location');
             return;
         }
-        console.log(photos.length);
 
-        if (photos.length === 0) {
-            Alert.alert('Validation', 'Please take at least one photo');
-            return;
-        }
 
         // Lookup coords & name from GeoJSON
         const feature = locationfind(data.location);
@@ -112,38 +119,17 @@ export default function Post() {
         const coords = feature.geometry.coordinates;
         const placeName = feature.properties.name;
 
-        let photofileID = [];
 
-        async function postPhoto (pictures) {
-
-            for (let i = 0; i < pictures.length; i++) {
-                const id = ID.unique();
-                photofileID.push(id);
-                const photo = await supplementPhoto(pictures[i]);
-                const result = await uploadfile(photo, id);
-                console.log(result);
-
-            }
-        }
 
         try {
-            // Upload each photo to Appwrite Storage
-            await postPhoto(photos);
-            console.log("Photos fileid:", photofileID);
+           const updatedBuffet = {level: data.level, locationdetails: data.locationdetails, clearedby: data.clearedby.toISOString(),
+                leftover: data.leftover, additionaldetails: data.additionaldetails, locationname: placeName,
+               locationcoordslat: coords[0], locationcoordslong: coords[1],};
             // Submit buffet post
-            const result = await postBuffet(
-                data.level,
-                data.locationdetails,
-                data.clearedby,
-                data.leftover,
-                data.additionaldetails,
-                user?.$id,
-                coords,
-                placeName,
-                photofileID,
-            );
-            Alert.alert('Success', 'Buffet posted successfully.');
+            const result = await updateFullBuffet(updatedBuffet, buffet.$id);
+            Alert.alert('Success', 'Buffet updated successfully.');
             console.log("Buffet posted", result )
+            return Index();
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Failed to upload and post buffet.');
@@ -153,7 +139,7 @@ export default function Post() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.topBar}>
-                <Text style={[styles.title, { color: theme.primary }]}>New Buffet</Text>
+                <Text style={[styles.title, { color: theme.primary }]}>Edit Buffet</Text>
                 <Soup size={24} color={theme.primary} />
             </View>
             <KeyboardAwareScrollView contentContainerStyle={styles.scrollContent}>
@@ -226,43 +212,6 @@ export default function Post() {
                     />
                 </View>
 
-                {/* Photo gallery and camera modal */}
-                <View style={styles.sectionContainer}>
-                    <Text style={styles.sectionHeaderText}>Photos</Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator
-                        contentContainerStyle={styles.photoScroll}
-                    >
-                        {photos.map((photo, idx) => (
-                            <View key={idx} style={styles.thumbnailWrapper}>
-                                <Image source={{ uri: photo.uri }} style={styles.thumbnail} />
-                                <TouchableOpacity
-                                    style={styles.removeButton}
-                                    onPress={() => removePhoto(idx)}
-                                >
-                                    <AntDesign name="closecircle" size={20} color="#fff" />
-                                </TouchableOpacity>
-                            </View>
-                        ))}
-                        {photos.length < 5 && (
-                            <TouchableOpacity
-                                style={styles.addButton}
-                                onPress={() => setIsCameraOpen(true)}
-                            >
-                                <AntDesign name="pluscircleo" size={36} color={theme.primary} />
-                                <Text style={styles.addText}>Add Photo</Text>
-                            </TouchableOpacity>
-                        )}
-                    </ScrollView>
-                    <Modal visible={isCameraOpen} animationType="slide">
-                        <Camera
-                            onPhotoTaken={handlePhotoTaken}
-                            onClose={() => setIsCameraOpen(false)}
-                        />
-                    </Modal>
-                </View>
-
                 {/* Cleared By Time Picker */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Cleared By</Text>
@@ -278,8 +227,8 @@ export default function Post() {
                                 }
                                 return true;
                             }
-                            }
-                    }
+                        }
+                        }
                         render={({ field: { onChange, value } }) => (
                             <>
                                 <TouchableOpacity
@@ -354,6 +303,16 @@ export default function Post() {
                 <Button
                     title="Submit Buffet"
                     onPress={handleSubmit(onSubmit)}
+                    color={theme.primary}
+                />
+                <Button
+                    title="Go Back"
+                    onPress={() => {router.back()}}
+                    color={theme.primary}
+                />
+                <Button
+                    title="Go Home"
+                    onPress={() => {router.push("/")}}
                     color={theme.primary}
                 />
             </KeyboardAwareScrollView>

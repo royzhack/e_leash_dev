@@ -7,7 +7,7 @@ import {
     View,
     ImageSourcePropType, Modal, StyleSheet, ActivityIndicator, FlatList
 } from "react-native"; //added Image Source Prop Type, but didnt use it
-import {getUsersBuffets, logout} from "@/lib/appwrite";
+import {getUsersBuffets, logout, updateBuffet} from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
 import { Image } from "react-native";
 import {
@@ -20,7 +20,12 @@ import {
 } from "lucide-react-native";
 import React, {useEffect, useState} from "react";
 import {Buffet} from '../../../types'
+import {deleteBuffet} from "@/lib/appwrite";
 import {red} from "react-native-reanimated/lib/typescript/Colors";
+import Slider from "@react-native-community/slider";
+import EditBuffet from "@/app/actions/editBuffet";
+import { useRouter } from "expo-router";
+
 
 
 interface SettingsItemProp { //this is necessary to define the arguments of each function and their datatype
@@ -62,6 +67,9 @@ const Profile = () => {// assembling the page itself
     const [usersBuffets, setUsersBuffets] = useState<Buffet[]>([]);
     const [loading, setLoading] = useState(false);
     const [expandedBuffet, setExpandedBuffet] = useState<string | null>(null);
+    const [leftover, setleftover] = useState<number>(50);
+
+    const router = useRouter();
 
     const handleLogout = async () => { //creating logout logic/function
         const result = await logout();
@@ -183,19 +191,37 @@ const Profile = () => {// assembling the page itself
 
                                                        {isExpanded && (
                                                            <View style={styles.dropdownMenu}>
-                                                               <TouchableOpacity onPress={() => {/* Toggle something or perform action */
+                                                               <View style={styles.sliderContainer}>
+                                                                   <Slider
+                                                                       style={{ flex: 1 }}
+                                                                       minimumValue={0}
+                                                                       maximumValue={100}
+                                                                       step={5}
+                                                                       value={leftover}
+                                                                       onValueChange={setleftover}
+                                                                       minimumTrackTintColor={theme.primary}
+                                                                   />
+                                                                   <Text style={styles.sliderValue}>{leftover}%</Text>
+                                                               </View>
+                                                               <TouchableOpacity onPress={() => {
+                                                                   updateBuffet(leftover, item.$id);
+                                                                   setleftover(50);
                                                                }}>
                                                                    <Text style={styles.details}>Update Buffet</Text>
                                                                </TouchableOpacity>
-                                                               <TouchableOpacity onPress={() => {/* Toggle something or perform action */
+                                                               <TouchableOpacity onPress={() => {
+                                                                   closeActiveBuffetModal();
+                                                                   router.push({
+                                                                   pathname: "/actions/editBuffet",
+                                                                   params: { buffet: JSON.stringify(item) }
+                                                               })
                                                                }}>
                                                                    <Text style={styles.details}>Edit Buffet</Text>
                                                                </TouchableOpacity>
-                                                               <TouchableOpacity onPress={() => {/* Another action */
+                                                               <TouchableOpacity onPress={() => {deleteBuffet(item.$id)
                                                                }}>
                                                                    <Text style={styles.details}>Delete buffet</Text>
                                                                </TouchableOpacity>
-                                                               {/* Add more actions as needed */}
                                                            </View>
                                                        )}
                                                    </TouchableOpacity>
@@ -230,6 +256,11 @@ const Profile = () => {// assembling the page itself
 };
 
 export default Profile;
+
+const theme = {
+    primary: '#0061FF',
+    overlay: 'rgba(37,99,235,0.3)',
+};
 
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 16, paddingTop: 40 },
@@ -291,5 +322,23 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderRadius: 8,
         backgroundColor: '#f0f0f0',
-    }
+    },
+    sliderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: theme.overlay,
+    },
+    sliderValue: { marginLeft: 12, color: theme.primary },
+    textInput: {
+        borderWidth: 1,
+        borderColor: theme.primary,
+        borderRadius: 6,
+        padding: 10,
+        minHeight: 80,
+        textAlignVertical: 'top',
+        backgroundColor: theme.overlay,
+        margin: 12,
+        color: theme.primary,
+    },
 });

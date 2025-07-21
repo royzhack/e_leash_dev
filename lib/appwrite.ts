@@ -7,6 +7,7 @@ import {
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
+import Buffet from "@/types";
 
 export const config = {
     platform: 'com.roy.wasteless',
@@ -95,6 +96,40 @@ export async function getCurrentUser() {
     }
 }
 
+export async function makeBuffet(newbuffet: Buffet) {
+    try {
+        const response = await databases.createDocument(
+            config.databaseId!,
+            config.buffetcollectionID!,
+            ID.unique(),
+            newbuffet
+        );
+
+        // Only include fields that exist in your Buffet interface
+        const buffet: Buffet = {
+            $id: response.$id,
+            $createdAt: response.$createdAt,
+            clearedby: new Date(response.clearedby),
+            leftover: response.leftover,
+            additionaldetails: response.additionaldetails,
+            level: response.level,
+            locationdetails: response.locationdetails,
+            locationname: response.locationname,
+            userID: response.userID,
+            locationcoordslat: response.locationcoordslat,
+            locationcoordslong: response.locationcoordslong,
+            photofileID: response.photofileID
+
+            // nuslocation: response.nuslocation // Only if in your schema/interface
+        };
+
+        return buffet;
+    } catch (error) {
+        console.error("Failed to create buffet:", error);
+        throw error;
+    }
+}
+
 export async function getLatestBuffets() {
     try{
         const result = await databases.listDocuments(
@@ -139,10 +174,45 @@ export async function uploadfile(file, fileID) {
     }
 }
 
-export async function deleteBuffet (buffetID) {
-    const result = await databases.deleteDocument
+export async function deleteBuffet (buffetID: string) {
+    try {
+        const result = await databases.deleteDocument(
+            config.databaseId!,
+            config.buffetcollectionID!,
+            buffetID
+        )
+        console.log("Buffet deleted", result);
+        return;
+    } catch (error) {
+        console.error(error);
+    }
 }
 
+export async function updateBuffet (leftover: number, buffetID: string) {
+    try {
+        const response = await databases.updateDocument(
+            config.databaseId,
+            config.buffetcollectionID,
+            buffetID,
+            {leftover: leftover}
+        );
+        console.log(response);
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+export async function updateFullBuffet (buffet, buffetID) {
+    try {
+        const response = await databases.updateDocument(
+            config.databaseId,
+            config.buffetcollectionID,
+            buffetID,
+            buffet);
+    } catch(error) {
+        console.error(error);
+    }
+}
 
 //mini to make it less inefficient
 
