@@ -109,7 +109,6 @@ export async function getLatestBuffets() {
         console.error(error)
         return [];
     }
-
 }
 
 export async function getUsersBuffets(userID) {
@@ -140,8 +139,8 @@ export async function uploadfile(file, fileID) {
     }
 }
 
-export async function deleteBuffet {
-
+export async function deleteBuffet (buffetID) {
+    const result = await databases.deleteDocument
 }
 
 
