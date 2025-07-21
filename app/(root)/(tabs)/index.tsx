@@ -24,28 +24,27 @@ export default function Index() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null);
 
-    // Fetch from Appwrite on mount
+    // Fetch data
     useEffect(() => {
         (async () => {
             try {
                 setLoading(true);
                 const docs = await getLatestBuffets();
                 setRawBuffets(docs);
-                setBuffets(docs); // Temporarily before distance is calculated
-            } catch (error) {
-                console.error(error);
+                setBuffets(docs);
+            } catch (err) {
+                console.error(err);
             } finally {
                 setLoading(false);
             }
         })();
     }, []);
 
-    // Recompute distances
+    // Calculate & sort by distance
     useEffect(() => {
         if (!userLocation || rawBuffets.length === 0) return;
-
         const withDistance = rawBuffets
-            .map((b) => ({
+            .map(b => ({
                 ...b,
                 distance: calculateDistance(
                     userLocation.latitude,
@@ -54,47 +53,38 @@ export default function Index() {
                     b.locationcoordslat
                 ),
             }))
-            .sort((a, b) => a.distance! - b.distance!);
-
+            .sort((a, b) => (a.distance! - b.distance!));
         setBuffets(withDistance);
     }, [userLocation, rawBuffets]);
 
     function useUserLocation(): UserLocation | null {
         const [location, setLocation] = useState<UserLocation | null>(null);
-
         useEffect(() => {
-            let subscriber: Location.LocationSubscription;
-
+            let sub: Location.LocationSubscription;
             (async () => {
                 const { status } = await Location.requestForegroundPermissionsAsync();
                 if (status !== 'granted') {
                     console.warn('Location permission denied');
                     return;
                 }
-                subscriber = await Location.watchPositionAsync(
+                sub = await Location.watchPositionAsync(
                     { accuracy: Location.Accuracy.High, distanceInterval: 5 },
-                    (loc) => {
+                    loc =>
                         setLocation({
                             latitude: loc.coords.latitude,
                             longitude: loc.coords.longitude,
-                        });
-                    }
+                        })
                 );
             })();
-
-            return () => subscriber?.remove();
+            return () => sub?.remove();
         }, []);
-
         return location;
     }
 
-    const levelfix = (level: number) => (level < 0 ? `B${-level}` : level);
-
-    const openModal = (buffet: Buffet) => {
-        setSelectedBuffet(buffet);
+    const openModal = (b: Buffet) => {
+        setSelectedBuffet(b);
         setModalVisible(true);
     };
-
     const closeModal = () => {
         setModalVisible(false);
         setSelectedBuffet(null);
@@ -103,92 +93,113 @@ export default function Index() {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color="#007AFF" />
             </View>
         );
     }
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.heading}>Welcome to NUS WasteLess</Text>
-            <Text style={styles.count}>
-                Found {buffets.length} buffet{buffets.length === 1 ? '' : 's'}
-            </Text>
-
             <FlatList
                 data={buffets}
-                keyExtractor={(item) => item.$id}
-                contentContainerStyle={{ paddingVertical: 16 }}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => openModal(item)}>
-                        <View style={styles.card}>
-                            <Text style={styles.title}>Level: {levelfix(item.level)}</Text>
-                            <Text>Leftover: {item.leftover}%</Text>
-                            <Text>Location: {item.locationname}</Text>
+                keyExtractor={item => item.$id}
+                contentContainerStyle={{ paddingVertical: 12 }}
+                renderItem={({ item, index }) => {
+                    // calculate minutes until clearing
+                    const now = new Date();
+                    const clearDate = new Date(item.clearedby);
+                    const diffMins = Math.round((clearDate.getTime() - now.getTime()) / 60000);
+                    return (
+                        <TouchableOpacity
+                            style={styles.card}
+                            activeOpacity={0.8}
+                            onPress={() => openModal(item)}
+                        >
+                            {/* Title row with name and distance */}
+                            <View style={styles.titleRow}>
+                                <Text style={styles.cardTitle}>{item.locationname}</Text>
+                                {item.distance != null && (
+                                    <Text style={styles.distanceTitle}>
+                                        | {(item.distance / 1000).toFixed(1)} km
+                                    </Text>
+                                )}
+                            </View>
 
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-                                {item.photofileID.map((id) => (
-                                    <Image
-                                        key={id}
-                                        source={{
-                                            uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
-                                        }}
-                                        style={styles.image}
-                                    />
-                                ))}
-                            </ScrollView>
-
-                            <Text>Details: {item.additionaldetails || '—'}</Text>
-                            <Text>
-                                Cleared by:{' '}
-                                {new Date(item.clearedby).toLocaleString('en-SG', {
-                                    dateStyle: 'medium',
-                                    timeStyle: 'short',
-                                })}
-                            </Text>
-                            <Text>Photo File IDs: {item.photofileID.join(', ')}</Text>
-                            {item.distance != null && (
-                                <Text>Distance: {item.distance.toFixed(0)} m</Text>
+                            {/* Nearest buffet marker */}
+                            {index === 0 && (
+                                <Text style={styles.nearestSmallLine}>
+                                    *Nearest buffet
+                                </Text>
                             )}
-                        </View>
-                    </TouchableOpacity>
-                )}
+
+                            {/* Restricted tag */}
+                            {item.restricted && (
+                                <Text style={styles.restricted}>Restricted Access</Text>
+                            )}
+
+                            {/* Amount left and progress bar */}
+                            <View style={styles.progressRow}>
+                                <Text style={styles.amountLabel}>Amount left:</Text>
+                                <View style={styles.progressBar}>
+                                    <View
+                                        style={[
+                                            styles.progress,
+                                            { width: `${item.leftover}%` },
+                                        ]}
+                                    />
+                                    <Text style={styles.progressText}>{item.leftover}%</Text>
+                                </View>
+                            </View>
+
+                            {/* Clearing countdown if <20 mins */}
+                            {diffMins > 0 && diffMins < 20 && (
+                                <Text style={styles.clearingText}>
+                                    *Clearing in {diffMins} min
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    );
+                }}
             />
 
             {/* Buffet Details Modal */}
-            <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
+            <Modal
+                visible={modalVisible}
+                animationType="slide"
+                transparent
+                onRequestClose={closeModal}
+            >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <ScrollView contentContainerStyle={styles.modalContentScroll}>
-                            <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                                <Text style={styles.closeButtonText}>X</Text>
-                            </TouchableOpacity>
+                        <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                            <Text style={styles.closeX}>✕</Text>
+                        </TouchableOpacity>
 
-                            {selectedBuffet && (
-                                <>
-                                    <Text style={styles.title}>Buffet Details</Text>
-
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-                                        {selectedBuffet.photofileID.map((id) => (
-                                            <Image
-                                                key={id}
-                                                source={{
-                                                    uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
-                                                }}
-                                                style={styles.image}
-                                            />
-                                        ))}
-                                    </ScrollView>
-
-                                    <Text style={styles.details}>
-                                        Leftover: {selectedBuffet.leftover}%{'\n'}
-                                        Level: {levelfix(selectedBuffet.level)}{'\n'}
-                                        Location: {selectedBuffet.locationname}{'\n'}
-                                        Details: {selectedBuffet.additionaldetails || '—'}
-                                    </Text>
-                                </>
-                            )}
-                        </ScrollView>
+                        {selectedBuffet && (
+                            <ScrollView>
+                                <Text style={styles.modalTitle}>Buffet Details</Text>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    style={{ marginVertical: 12 }}
+                                >
+                                    {selectedBuffet.photofileID.map(id => (
+                                        <Image
+                                            key={id}
+                                            source={{
+                                                uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
+                                            }}
+                                            style={styles.modalImage}
+                                        />
+                                    ))}
+                                </ScrollView>
+                                <Text style={styles.modalText}>
+                                    Location: {selectedBuffet.locationname}{'\n'}
+                                    Leftover: {selectedBuffet.leftover}%{'\n'}
+                                    Details: {selectedBuffet.additionaldetails || '—'}
+                                </Text>
+                            </ScrollView>
+                        )}
                     </View>
                 </View>
             </Modal>
@@ -197,57 +208,73 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16, paddingTop: 40 },
+    container: { flex: 1, backgroundColor: '#F2F5FA' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    heading: { fontSize: 24, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
-    count: { fontSize: 16, marginBottom: 12, textAlign: 'center' },
     card: {
-        padding: 12,
-        marginBottom: 16,
-        borderRadius: 8,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: '#FFFFFF',
+        marginHorizontal: 16,
+        marginBottom: 12,
+        borderRadius: 12,
+        padding: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowRadius: 3,
         elevation: 2,
     },
-    title: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
-    imageScroll: { marginVertical: 10 },
-    image: {
-        width: 200,
-        height: 200,
-        borderRadius: 10,
-        marginRight: 10,
-        backgroundColor: '#ddd',
+    titleRow: { flexDirection: 'row', alignItems: 'center' },
+    cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF' },
+    distanceTitle: { fontSize: 14, color: '#666', marginLeft: 8 },
+    nearestSmallLine: { fontSize: 12, color: '#007AFF', fontWeight: '600', marginTop: 4 },
+    restricted: { marginTop: 6, color: '#E53935', fontWeight: '600' },
+    progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+    amountLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginRight: 8 },
+    progressBar: {
+        flex: 1,
+        height: 10,
+        backgroundColor: '#E5E5EA',
+        borderRadius: 5,
+        overflow: 'hidden',
+    },
+    progress: {
+        height: '100%',
+        backgroundColor: '#007AFF',
+    },
+    progressText: {
+        position: 'absolute',
+        alignSelf: 'center',
+        top: -2,
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
+    clearingText: {
+        marginTop: 8,
+        fontSize: 14,
+        color: '#E53935',
+        fontWeight: '600',
     },
     modalOverlay: {
         flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFFFF',
         padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        height: '80%',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 5,
-        elevation: 10,
+        maxHeight: '80%',
     },
-    modalContentScroll: { flexGrow: 1 },
-    closeButton: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: '#ff5b5b',
-        borderRadius: 15,
-        padding: 10,
-        zIndex: 10,
+    closeButton: { position: 'absolute', right: 16, top: 16, zIndex: 10 },
+    closeX: { fontSize: 20, color: '#333' },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#007AFF',
+        textAlign: 'center',
+        marginBottom: 12,
     },
-    closeButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-    details: { fontSize: 16, lineHeight: 24, marginTop: 12 },
+    modalImage: { width: 200, height: 200, borderRadius: 12, marginRight: 10, backgroundColor: '#EEE' },
+    modalText: { fontSize: 16, lineHeight: 24, color: '#333' },
 });
