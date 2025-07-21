@@ -19,7 +19,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
 import { AntDesign } from '@expo/vector-icons';
 import Camera from '@/app/actions/camera';
-import {postBuffet, supplementPhoto} from '@/app/actions/postBuffet';
+import {postBuffet, supplementPhoto} from '@/app/actions/buffetActions';
 import { useGlobalContext } from '@/lib/global-provider';
 import locations from '@/assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -29,7 +29,7 @@ import { Client, ID, Storage } from 'react-native-appwrite';
 import * as FileSystem from 'expo-file-system';
 import {uploadfile} from "@/lib/appwrite";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
+import {timecheck} from '../../actions/timefunctions'
 
 // Theme colors
 const theme = {
@@ -54,19 +54,7 @@ const LEVELS = [
 // GeoJSON helper
 const locationfind = id => geojsonData.features.find(x => x.id === id);
 
-//timechecker
-function timecheck (value, timediffMins: number): boolean {
-    if (!value) {
-        return false;
-    }
-    const input = new Date(value);
-    if (isNaN(input.getTime())) {
-        return false;
-    }
-    const now = new Date();
-    console.log(value, typeof value, value instanceof Date);
-    return input - now >= timediffMins * 60 * 1000;
-}
+
 
 export default function Post() {
     const user = useGlobalContext().user;

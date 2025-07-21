@@ -20,6 +20,7 @@ import {
 } from "lucide-react-native";
 import React, {useEffect, useState} from "react";
 import {Buffet} from '../../../types'
+import {red} from "react-native-reanimated/lib/typescript/Colors";
 
 
 interface SettingsItemProp { //this is necessary to define the arguments of each function and their datatype
@@ -60,6 +61,7 @@ const Profile = () => {// assembling the page itself
     const [activeBuffetvisible, setActiveBuffetvisible] = useState(false);
     const [usersBuffets, setUsersBuffets] = useState<Buffet[]>([]);
     const [loading, setLoading] = useState(false);
+    const [expandedBuffet, setExpandedBuffet] = useState<string | null>(null);
 
     const handleLogout = async () => { //creating logout logic/function
         const result = await logout();
@@ -70,6 +72,7 @@ const Profile = () => {// assembling the page itself
             Alert.alert("Error", "Failed to logout");
         }
     };
+
     useEffect(() => {
         (async () => {
             try {
@@ -115,7 +118,7 @@ const Profile = () => {// assembling the page itself
         <SafeAreaView className="h-full bg-white"> {/*first wrap everything in a safe area view*/ }
             <ScrollView //then a scroll view
                 showsVerticalScrollIndicator={true}
-                contentContainerClassName="pb-32 px-7"
+                className="pb-32 px-7"
             >
                 {/* Top Bar */}
                 <View className="flex flex-row items-center justify-between mt-5">
@@ -159,22 +162,47 @@ const Profile = () => {// assembling the page itself
                                        data={usersBuffets}
                                        keyExtractor={item => item.$id}
                                        contentContainerStyle={{ paddingVertical: 16 }}
-                                       renderItem={({ item }) => (
+                                       renderItem={({ item }) => {
+                                           const isExpanded = expandedBuffet === item.$id;
+                                          return (
                                                <View style={styles.card}>
-                                                   <Text style={styles.title}>
-                                                       Level: {levelfix(item.level)}
-                                                   </Text>
-                                                   <Text>Leftover: {item.leftover}%</Text>
-                                                   <Text>Location: {item.locationname}</Text>
-                                                   <Text>Details: {item.additionaldetails || '—'}</Text>
-                                                   <Text>
-                                                       Cleared by:{' '}
-                                                       {new Date(item.clearedby).toLocaleString('en-SG', {
-                                                           dateStyle: 'medium', timeStyle: 'short',
-                                                       })}
-                                                   </Text>
+                                                   <TouchableOpacity
+                                                       onPress={() => setExpandedBuffet(isExpanded ? null : item.$id)}>
+                                                       <Text style={styles.title}>
+                                                           Level: {levelfix(item.level)}
+                                                       </Text>
+                                                       <Text>Leftover: {item.leftover}%</Text>
+                                                       <Text>Location: {item.locationname}</Text>
+                                                       <Text>Details: {item.additionaldetails || '—'}</Text>
+                                                       <Text>
+                                                           Cleared by:{' '}
+                                                           {new Date(item.clearedby).toLocaleString('en-SG', {
+                                                               dateStyle: 'medium', timeStyle: 'short',
+                                                           })}
+                                                       </Text>
+
+                                                       {isExpanded && (
+                                                           <View style={styles.dropdownMenu}>
+                                                               <TouchableOpacity onPress={() => {/* Toggle something or perform action */
+                                                               }}>
+                                                                   <Text style={styles.details}>Update Buffet</Text>
+                                                               </TouchableOpacity>
+                                                               <TouchableOpacity onPress={() => {/* Toggle something or perform action */
+                                                               }}>
+                                                                   <Text style={styles.details}>Edit Buffet</Text>
+                                                               </TouchableOpacity>
+                                                               <TouchableOpacity onPress={() => {/* Another action */
+                                                               }}>
+                                                                   <Text style={styles.details}>Delete buffet</Text>
+                                                               </TouchableOpacity>
+                                                               {/* Add more actions as needed */}
+                                                           </View>
+                                                       )}
+                                                   </TouchableOpacity>
                                                </View>
-                                       )}
+                                           )
+                                        }
+                                       }
                                    />
                                </View>
                            </View>
@@ -254,7 +282,14 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     details: {
-        fontSize: 18,
+        fontSize: 16,
         marginBottom: 20,
+        color: 'red'
     },
+    dropdownMenu: {
+        padding: 12,
+        marginBottom: 12,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+    }
 });

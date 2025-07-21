@@ -15,8 +15,8 @@ export async function postBuffet(level: number, locationdetails:string,  cleared
 
     try {
         const response = await databases.createDocument(
-            '6842a4150011ed4c7211',
-            '6842aa210006eafe1e09',
+            process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
+            process.env.EXPO_PUBLIC_APPWRITE_BUFFETS_COLLECTION_ID,
             ID.unique(),
             newBuffet
         );

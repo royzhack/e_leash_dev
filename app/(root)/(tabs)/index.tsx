@@ -19,6 +19,7 @@ import calculateDistance from "@/app/actions/locationfunctions";
 
 
 
+
 export default function Index() {
     //GetLocation();
     const userLocation = useUserLocation();
@@ -121,6 +122,7 @@ export default function Index() {
         setModalVisible(true); // open the modal
     };
 
+
     //  Close modal
     const closeModal = () => {
         setModalVisible(false); // close the modal
@@ -133,7 +135,6 @@ export default function Index() {
             <Text style={styles.count}>
                 Found {buffets.length} buffet{buffets.length === 1 ? '' : 's'}
             </Text>
-
             <FlatList
                 data={buffets}
                 keyExtractor={item => item.$id}

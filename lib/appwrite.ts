@@ -9,13 +9,16 @@ import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
 
 export const config = {
-    platform : 'com.roy.wasteless',
-    endpoint : 'https://cloud.appwrite.io/v1',
-    projectID: "6837256a001912254094",
-    databaseId: '6842a4150011ed4c7211',
-    buffetcollectionID: '6842aa210006eafe1e09',
-    bucketID: '685387bd00305b201702'
+    platform: 'com.roy.wasteless',
+    endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
+    projectID: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
+    databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
+    buffetcollectionID: process.env.EXPO_PUBLIC_APPWRITE_BUFFETS_COLLECTION_ID,
+    bucketID: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID
 }
+
+console.log(config)
+
 
 export const client = new Client()
 
@@ -127,7 +130,7 @@ export async function uploadfile(file, fileID) {
     try {
         const result = await storage.createFile(
             config.bucketID, // bucketId
-            fileID, // fileId
+            fileID, // fileID
             file // file
         );
 
@@ -136,7 +139,13 @@ export async function uploadfile(file, fileID) {
         console.error(error);
     }
 }
-//mini to make it less inefficienr
+
+export async function deleteBuffet {
+
+}
+
+
+//mini to make it less inefficient
 
 export async function getFileMini(fileID)  {
     try {
