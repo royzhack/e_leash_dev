@@ -7,7 +7,7 @@ import {
     View,
     ImageSourcePropType, Modal, StyleSheet, ActivityIndicator, FlatList
 } from "react-native"; //added Image Source Prop Type, but didnt use it
-import {getUsersBuffets, logout} from "@/lib/appwrite";
+import {getUsersBuffets, logout, updateBuffet} from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
 import { Image } from "react-native";
 import {
@@ -20,6 +20,12 @@ import {
 } from "lucide-react-native";
 import React, {useEffect, useState} from "react";
 import {Buffet} from '../../../types'
+import {deleteBuffet} from "@/lib/appwrite";
+import {red} from "react-native-reanimated/lib/typescript/Colors";
+import Slider from "@react-native-community/slider";
+import EditBuffet from "@/app/actions/editBuffet";
+import { useRouter } from "expo-router";
+
 
 
 interface SettingsItemProp { //this is necessary to define the arguments of each function and their datatype
@@ -60,6 +66,10 @@ const Profile = () => {// assembling the page itself
     const [activeBuffetvisible, setActiveBuffetvisible] = useState(false);
     const [usersBuffets, setUsersBuffets] = useState<Buffet[]>([]);
     const [loading, setLoading] = useState(false);
+    const [expandedBuffet, setExpandedBuffet] = useState<string | null>(null);
+    const [leftover, setleftover] = useState<number>(50);
+
+    const router = useRouter();
 
     const handleLogout = async () => { //creating logout logic/function
         const result = await logout();
@@ -70,6 +80,7 @@ const Profile = () => {// assembling the page itself
             Alert.alert("Error", "Failed to logout");
         }
     };
+
     useEffect(() => {
         (async () => {
             try {
@@ -115,7 +126,7 @@ const Profile = () => {// assembling the page itself
         <SafeAreaView className="h-full bg-white"> {/*first wrap everything in a safe area view*/ }
             <ScrollView //then a scroll view
                 showsVerticalScrollIndicator={true}
-                contentContainerClassName="pb-32 px-7"
+                className="pb-32 px-7"
             >
                 {/* Top Bar */}
                 <View className="flex flex-row items-center justify-between mt-5">
@@ -159,22 +170,65 @@ const Profile = () => {// assembling the page itself
                                        data={usersBuffets}
                                        keyExtractor={item => item.$id}
                                        contentContainerStyle={{ paddingVertical: 16 }}
-                                       renderItem={({ item }) => (
+                                       renderItem={({ item }) => {
+                                           const isExpanded = expandedBuffet === item.$id;
+                                          return (
                                                <View style={styles.card}>
-                                                   <Text style={styles.title}>
-                                                       Level: {levelfix(item.level)}
-                                                   </Text>
-                                                   <Text>Leftover: {item.leftover}%</Text>
-                                                   <Text>Location: {item.locationname}</Text>
-                                                   <Text>Details: {item.additionaldetails || '—'}</Text>
-                                                   <Text>
-                                                       Cleared by:{' '}
-                                                       {new Date(item.clearedby).toLocaleString('en-SG', {
-                                                           dateStyle: 'medium', timeStyle: 'short',
-                                                       })}
-                                                   </Text>
+                                                   <TouchableOpacity
+                                                       onPress={() => setExpandedBuffet(isExpanded ? null : item.$id)}>
+                                                       <Text style={styles.title}>
+                                                           Level: {levelfix(item.level)}
+                                                       </Text>
+                                                       <Text>Leftover: {item.leftover}%</Text>
+                                                       <Text>Location: {item.locationname}</Text>
+                                                       <Text>Details: {item.additionaldetails || '—'}</Text>
+                                                       <Text>
+                                                           Cleared by:{' '}
+                                                           {new Date(item.clearedby).toLocaleString('en-SG', {
+                                                               dateStyle: 'medium', timeStyle: 'short',
+                                                           })}
+                                                       </Text>
+
+                                                       {isExpanded && (
+                                                           <View style={styles.dropdownMenu}>
+                                                               <View style={styles.sliderContainer}>
+                                                                   <Slider
+                                                                       style={{ flex: 1 }}
+                                                                       minimumValue={0}
+                                                                       maximumValue={100}
+                                                                       step={5}
+                                                                       value={leftover}
+                                                                       onValueChange={setleftover}
+                                                                       minimumTrackTintColor={theme.primary}
+                                                                   />
+                                                                   <Text style={styles.sliderValue}>{leftover}%</Text>
+                                                               </View>
+                                                               <TouchableOpacity onPress={() => {
+                                                                   updateBuffet(leftover, item.$id);
+                                                                   setleftover(50);
+                                                               }}>
+                                                                   <Text style={styles.details}>Update Buffet</Text>
+                                                               </TouchableOpacity>
+                                                               <TouchableOpacity onPress={() => {
+                                                                   closeActiveBuffetModal();
+                                                                   router.push({
+                                                                   pathname: "/actions/editBuffet",
+                                                                   params: { buffet: JSON.stringify(item) }
+                                                               })
+                                                               }}>
+                                                                   <Text style={styles.details}>Edit Buffet</Text>
+                                                               </TouchableOpacity>
+                                                               <TouchableOpacity onPress={() => {deleteBuffet(item.$id)
+                                                               }}>
+                                                                   <Text style={styles.details}>Delete buffet</Text>
+                                                               </TouchableOpacity>
+                                                           </View>
+                                                       )}
+                                                   </TouchableOpacity>
                                                </View>
-                                       )}
+                                           )
+                                        }
+                                       }
                                    />
                                </View>
                            </View>
@@ -202,6 +256,11 @@ const Profile = () => {// assembling the page itself
 };
 
 export default Profile;
+
+const theme = {
+    primary: '#0061FF',
+    overlay: 'rgba(37,99,235,0.3)',
+};
 
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 16, paddingTop: 40 },
@@ -254,7 +313,32 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     details: {
-        fontSize: 18,
+        fontSize: 16,
         marginBottom: 20,
+        color: 'red'
+    },
+    dropdownMenu: {
+        padding: 12,
+        marginBottom: 12,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+    },
+    sliderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: theme.overlay,
+    },
+    sliderValue: { marginLeft: 12, color: theme.primary },
+    textInput: {
+        borderWidth: 1,
+        borderColor: theme.primary,
+        borderRadius: 6,
+        padding: 10,
+        minHeight: 80,
+        textAlignVertical: 'top',
+        backgroundColor: theme.overlay,
+        margin: 12,
+        color: theme.primary,
     },
 });
