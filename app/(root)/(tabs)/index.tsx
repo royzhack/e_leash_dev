@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     Text,
     View,
@@ -10,11 +10,13 @@ import {
     ScrollView,
     TouchableOpacity,
     Image,
+    RefreshControl,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { getLatestBuffets } from '@/lib/appwrite';
 import { Buffet, UserLocation } from '../../../types';
 import calculateDistance from '@/app/actions/locationfunctions';
+import {Soup} from "lucide-react-native";
 
 export default function Index() {
     const userLocation = useUserLocation();
@@ -23,28 +25,37 @@ export default function Index() {
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null);
+    const [refreshing, setRefreshing] = useState(false); // ← ADDED: pull-to-refresh state
 
     // Fetch data
-    useEffect(() => {
-        (async () => {
-            try {
-                setLoading(true);
-                const docs = await getLatestBuffets();
-                setRawBuffets(docs);
-                setBuffets(docs);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        })();
+    const fetchBuffets = useCallback(async () => {
+        setLoading(true);
+        try {
+            const docs = await getLatestBuffets();
+            setRawBuffets(docs);
+            setBuffets(docs);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    // Calculate & sort by distance
+    useEffect(() => {
+        fetchBuffets();
+    }, [fetchBuffets]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchBuffets();
+        setRefreshing(false);
+    }, [fetchBuffets]);
+
+    // Recompute distances when data or location changes
     useEffect(() => {
         if (!userLocation || rawBuffets.length === 0) return;
         const withDistance = rawBuffets
-            .map(b => ({
+            .map((b) => ({
                 ...b,
                 distance: calculateDistance(
                     userLocation.latitude,
@@ -53,7 +64,7 @@ export default function Index() {
                     b.locationcoordslat
                 ),
             }))
-            .sort((a, b) => (a.distance! - b.distance!));
+            .sort((a, b) => a.distance! - b.distance!);
         setBuffets(withDistance);
     }, [userLocation, rawBuffets]);
 
@@ -100,10 +111,21 @@ export default function Index() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <View style={styles.topBar}>
+                <Text style={styles.title}>Active Buffets</Text>
+                <Soup size={24} color={'#0061FF'} />
+            </View>
             <FlatList
                 data={buffets}
                 keyExtractor={item => item.$id}
                 contentContainerStyle={{ paddingVertical: 12 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh} // ← ADDED: pull-to-refresh binding
+                        tintColor="#007AFF"
+                    />
+                }
                 renderItem={({ item, index }) => {
                     // calculate minutes until clearing
                     const now = new Date();
@@ -157,6 +179,13 @@ export default function Index() {
                                     *Clearing in {diffMins} min
                                 </Text>
                             )}
+                            {diffMins < 0 && (
+                                <Text style={styles.clearingText}>
+                                    *Cleared {-1*diffMins} min ago
+                                </Text>
+                            )}
+
+
                         </TouchableOpacity>
                     );
                 }}
@@ -208,6 +237,12 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+    topBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+    },
     container: { flex: 1, backgroundColor: '#F2F5FA' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     card: {
@@ -221,6 +256,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 2,
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#0061FF',
     },
     titleRow: { flexDirection: 'row', alignItems: 'center' },
     cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF' },
@@ -250,7 +290,7 @@ const styles = StyleSheet.create({
     },
     clearingText: {
         marginTop: 8,
-        fontSize: 14,
+        fontSize: 12,
         color: '#E53935',
         fontWeight: '600',
     },

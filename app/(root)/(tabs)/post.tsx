@@ -24,56 +24,53 @@ import { useGlobalContext } from '@/lib/global-provider';
 import locations from '@/assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
 import geojsonData from '@/assets/NUSLocations/map.json';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useNavigation } from '@react-navigation/native';       // ADDED: navigation hook
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
-import * as FileSystem from 'expo-file-system';
 import {uploadfile} from "@/lib/appwrite";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 
 // Theme colors
+type Props = {};
 const theme = {
-    primary: '#0061FF',
-    overlay: 'rgba(37,99,235,0.3)',
+    primary: '#0061FF',           // main action color (blue)
+    secondary: '#0061FF',         // secondary accent (green)
+    accent: '#0061FF',            // tertiary accent (amber)
+    background: '#FFFFFF',        // light grey background
+    surface: '#FFFFFF',           // card backgrounds, surfaces
+    overlay: 'rgba(0,0,0,0.1)',   // translucent overlay (subtle grey)
+    error: '#FF0000',             // error text and alerts
+    textPrimary: '#212529',       // dark primary text
+    textSecondary: '#FFFFFF',     // secondary text (muted)
+    refreshTint: '#007AFF'        // pull-to-refresh indicator
 };
 
 // Level options
 const LEVELS = [
-    { label: '7', value: 7 },
-    { label: '6', value: 6 },
-    { label: '5', value: 5 },
-    { label: '4', value: 4 },
-    { label: '3', value: 3 },
-    { label: '2', value: 2 },
-    { label: '1', value: 1 },
-    { label: 'B1', value: -1 },
-    { label: 'B2', value: -2 },
-    { label: 'B3', value: -3 }
+    { label: '7', value: 7 }, { label: '6', value: 6 }, { label: '5', value: 5 },
+    { label: '4', value: 4 }, { label: '3', value: 3 }, { label: '2', value: 2 },
+    { label: '1', value: 1 }, { label: 'B1', value: -1 }, { label: 'B2', value: -2 }, { label: 'B3', value: -3 }
 ];
 
 // GeoJSON helper
 const locationfind = id => geojsonData.features.find(x => x.id === id);
 
-//timechecker
-function timecheck (value, timediffMins: number): boolean {
-    if (!value) {
-        return false;
-    }
+// Time checker
+function timecheck(value, timediffMins: number): boolean {
+    if (!value) return false;
     const input = new Date(value);
-    if (isNaN(input.getTime())) {
-        return false;
-    }
-    const now = new Date();
-    console.log(value, typeof value, value instanceof Date);
-    return input - now >= timediffMins * 60 * 1000;
+    if (isNaN(input.getTime())) return false;
+    return input.getTime() - Date.now() >= timediffMins * 60 * 1000;
 }
 
-export default function Post() {
+export default function Post(props: Props) {
+    const navigation = useNavigation();                     // ADDED: get navigation instance
     const user = useGlobalContext().user;
     const { control, handleSubmit, formState: { errors, isSubmitSuccessful }, reset } = useForm({
         defaultValues: {
             location: null,
-            level: LEVELS[4].label,
+            level: LEVELS[4].value,
             clearedby: new Date(),
             leftover: 0,
             additionaldetails: ''
@@ -91,41 +88,21 @@ export default function Post() {
 
     useEffect(() => {
         if (isSubmitSuccessful) {
-            // Reset form fields to default values
-            reset();
-
-            // reset the other usestates
-            setPhotos([]);
-            setShowTimePicker(false);
-            setIsCameraOpen(false);
-
+            reset(); setPhotos([]); setShowTimePicker(false); setIsCameraOpen(false);
         }
     }, [isSubmitSuccessful, reset]);
 
     const onSubmit = async data => {
-        // Basic validation
-        if (!data.location) {
-            Alert.alert('Validation', 'Please select a location');
-            return;
-        }
-        console.log(photos.length);
+        if (!data.location) { Alert.alert('Validation', 'Please select a location'); return; }
+        if (photos.length === 0) { Alert.alert('Validation', 'Please take at least one photo'); return; }
 
-        if (photos.length === 0) {
-            Alert.alert('Validation', 'Please take at least one photo');
-            return;
-        }
-
-        // Lookup coords & name from GeoJSON
+        // Lookup coords & name
         const feature = locationfind(data.location);
-        if (!feature) {
-            Alert.alert('Validation', 'Invalid location selected');
-            return;
-        }
+        if (!feature) { Alert.alert('Validation', 'Invalid location selected'); return; }
         const coords = feature.geometry.coordinates;
         const placeName = feature.properties.name;
 
-        let photofileID = [];
-
+        const photofileID = [];
         async function postPhoto (pictures) {
 
             for (let i = 0; i < pictures.length; i++) {
@@ -139,11 +116,8 @@ export default function Post() {
         }
 
         try {
-            // Upload each photo to Appwrite Storage
             await postPhoto(photos);
-            console.log("Photos fileid:", photofileID);
-            // Submit buffet post
-            const result = await postBuffet(
+            await postBuffet(
                 data.level,
                 data.locationdetails,
                 data.clearedby,
@@ -152,10 +126,10 @@ export default function Post() {
                 user?.$id,
                 coords,
                 placeName,
-                photofileID,
+                photofileID
             );
             Alert.alert('Success', 'Buffet posted successfully.');
-            console.log("Buffet posted", result )
+            navigation.navigate('index');            // ADDED: go to Home screen
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Failed to upload and post buffet.');
@@ -229,7 +203,7 @@ export default function Post() {
                         render={({ field: { onChange, value } }) => (
                             <TextInput
                                 style={styles.textInput}
-                                placeholder="Nearby landmarks (eg. parking lots/ benches, etc)"
+                                placeholder="Nearby landmarks..."
                                 multiline
                                 value={value}
                                 onChangeText={onChange}
@@ -241,37 +215,22 @@ export default function Post() {
                 {/* Photo gallery and camera modal */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Photos</Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator
-                        contentContainerStyle={styles.photoScroll}
-                    >
+                    <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.photoScroll}>
                         {photos.map((photo, idx) => (
                             <View key={idx} style={styles.thumbnailWrapper}>
                                 <Image source={{ uri: photo.uri }} style={styles.thumbnail} />
-                                <TouchableOpacity
-                                    style={styles.removeButton}
-                                    onPress={() => removePhoto(idx)}
-                                >
+                                <TouchableOpacity style={styles.removeButton} onPress={() => removePhoto(idx)}>
                                     <AntDesign name="closecircle" size={20} color="#fff" />
                                 </TouchableOpacity>
                             </View>
                         ))}
-                        {photos.length < 5 && (
-                            <TouchableOpacity
-                                style={styles.addButton}
-                                onPress={() => setIsCameraOpen(true)}
-                            >
-                                <AntDesign name="pluscircleo" size={36} color={theme.primary} />
-                                <Text style={styles.addText}>Add Photo</Text>
-                            </TouchableOpacity>
-                        )}
+                        <TouchableOpacity style={styles.addButton} onPress={() => setIsCameraOpen(true)}>
+                            <AntDesign name="pluscircleo" size={36} color={theme.primary} />
+                            <Text style={styles.addText}>Add Photo</Text>
+                        </TouchableOpacity>
                     </ScrollView>
                     <Modal visible={isCameraOpen} animationType="slide">
-                        <Camera
-                            onPhotoTaken={handlePhotoTaken}
-                            onClose={() => setIsCameraOpen(false)}
-                        />
+                        <Camera onPhotoTaken={handlePhotoTaken} onClose={() => setIsCameraOpen(false)} />
                     </Modal>
                 </View>
 
@@ -281,44 +240,17 @@ export default function Post() {
                     <Controller
                         control={control}
                         name="clearedby"
-                        rules = {{required: true, validate: (value) => {
-                                const valid = timecheck(value, 10);
-                                if (!valid) {
-                                    //Alert.alert("Invalid Cleared-by Time", "Buffet cannot be cleared in less than 10 minutes");
-                                    // Returning the same message lets it show as a field error too
-                                    return "Buffet cannot be cleared in less than 10 minutes";
-                                }
-                                return true;
-                            }
-                            }
-                    }
+                        rules={{ required: true, validate: value => timecheck(value, 10) || "Cannot be in less than 10 min" }}
                         render={({ field: { onChange, value } }) => (
                             <>
-                                <TouchableOpacity
-                                    style={styles.selector}
-                                    onPress={() => setShowTimePicker(true)}
-                                >
-                                    <Text style={styles.selectorText}>
-                                        {value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </Text>
+                                <TouchableOpacity style={styles.selector} onPress={() => setShowTimePicker(true)}>
+                                    <Text style={styles.selectorText}>{value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                                 </TouchableOpacity>
-                                {showTimePicker && (
-                                    <DateTimePicker
-                                        value={value}
-                                        mode="time"
-                                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                        onChange={(_, date) => {
-                                            setShowTimePicker(false);
-                                            date && onChange(date);
-                                        }}
-                                    />
-                                )}
+                                {showTimePicker && <DateTimePicker value={value} mode="time" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, date) => { setShowTimePicker(false); date && onChange(date); }} />}
                             </>
                         )}
                     />
-                    {errors.clearedby && (
-                        <Text style={styles.errorText}>{errors.clearedby.message}</Text>
-                    )}
+                    {errors.clearedby && <Text style={styles.errorText}>{errors.clearedby.message}</Text>}
                 </View>
 
                 {/* Leftover Slider */}
@@ -329,15 +261,7 @@ export default function Post() {
                         name="leftover"
                         render={({ field: { onChange, value } }) => (
                             <View style={styles.sliderContainer}>
-                                <Slider
-                                    style={{ flex: 1 }}
-                                    minimumValue={0}
-                                    maximumValue={100}
-                                    step={5}
-                                    value={value}
-                                    onValueChange={onChange}
-                                    minimumTrackTintColor={theme.primary}
-                                />
+                                <Slider style={{ flex: 1 }} minimumValue={0} maximumValue={100} step={5} value={value} onValueChange={onChange} minimumTrackTintColor={theme.primary} />
                                 <Text style={styles.sliderValue}>{value}%</Text>
                             </View>
                         )}
@@ -351,50 +275,53 @@ export default function Post() {
                         control={control}
                         name="additionaldetails"
                         render={({ field: { onChange, value } }) => (
-                            <TextInput
-                                style={styles.textInput}
-                                placeholder="Enter any notes"
-                                multiline
-                                value={value}
-                                onChangeText={onChange}
-                            />
+                            <TextInput style={styles.textInput} placeholder="Enter notes" multiline value={value} onChangeText={onChange} />
                         )}
                     />
                 </View>
 
                 {/* Submit Button */}
-                <Button
-                    title="Submit Buffet"
-                    onPress={handleSubmit(onSubmit)}
-                    color={theme.primary}
-                />
+                <Button title="Submit Buffet" onPress={handleSubmit(onSubmit)} color={theme.primary} />
             </KeyboardAwareScrollView>
         </SafeAreaView>
     );
 }
 
+
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' },
+    container: {
+        flex: 1,
+        backgroundColor: '#F2F5FA' ,
+    },
     topBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
     },
-    title: { fontSize: 20, fontWeight: 'bold' },
-    scrollContent: { padding: 16, paddingBottom: 40 },
+    title: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: theme.textPrimary,
+    },
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 40,
+    },
     sectionContainer: {
         marginBottom: 20,
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
         borderRadius: 8,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: theme.primary,
     },
     sectionHeaderText: {
         padding: 12,
         fontSize: 16,
         fontWeight: '600',
         backgroundColor: theme.primary,
-        color: '#fff',
+        color: theme.surface,
     },
     dropdown: {
         borderWidth: 1,
@@ -402,19 +329,38 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         paddingHorizontal: 10,
         paddingVertical: 8,
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
         margin: 12,
-        color: theme.primary,
+        color: theme.surface,
     },
-    errorText: { color: 'red', marginHorizontal: 12, marginBottom: 8 },
-    photoScroll: { alignItems: 'center', padding: 12, backgroundColor: theme.overlay },
-    thumbnailWrapper: { position: 'relative', marginRight: 12 },
-    thumbnail: { width: 80, height: 80, borderRadius: 6 },
+    errorText: {
+        color: theme.error,
+        marginHorizontal: 12,
+        marginBottom: 8,
+    },
+    photoScroll: {
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: theme.surface,
+        color: theme.surface,
+    },
+    thumbnailWrapper: {
+        position: 'relative',
+        marginRight: 12,
+        backgroundColor : theme.surface,
+        color : theme.surface,
+    },
+    thumbnail: {
+        width: 80,
+        height: 80,
+        borderRadius: 6,
+        backgroundColor : theme.primary,
+    },
     removeButton: {
         position: 'absolute',
         top: -6,
         right: -6,
-        backgroundColor: theme.primary,
+        backgroundColor: theme.secondary,
         borderRadius: 12,
         padding: 2,
     },
@@ -423,37 +369,50 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: theme.primary,
+        borderColor: theme.accent,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.background,
+        marginRight: 12,
     },
-    addText: { fontSize: 10, color: theme.primary, marginTop: 4, textAlign: 'center' },
+    addText: {
+        fontSize: 10,
+        color: theme.accent,
+        marginTop: 4,
+        textAlign: 'center',
+    },
     selector: {
         borderWidth: 1,
-        borderColor: theme.primary,
+        borderColor: theme.accent,
         borderRadius: 6,
         padding: 10,
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
         margin: 12,
+        color: theme.surface,
     },
-    selectorText: { color: theme.primary },
+    selectorText: {
+        color: theme.textPrimary,
+    },
     sliderContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
+        color: theme.surface,
     },
-    sliderValue: { marginLeft: 12, color: theme.primary },
+    sliderValue: {
+        marginLeft: 12,
+        color: theme.secondary,
+    },
     textInput: {
         borderWidth: 1,
-        borderColor: theme.primary,
+        borderColor: theme.secondary,
         borderRadius: 6,
         padding: 10,
         minHeight: 80,
         textAlignVertical: 'top',
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
         margin: 12,
-        color: theme.primary,
+        color: theme.surface,
     },
 });
