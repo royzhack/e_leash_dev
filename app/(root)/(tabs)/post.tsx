@@ -29,7 +29,6 @@ import { useNavigation } from '@react-navigation/native';       // ADDED: naviga
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
 import {uploadfile} from "@/lib/appwrite";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {timecheck} from '../../actions/timefunctions'
 
 
@@ -58,14 +57,6 @@ const LEVELS = [
 // GeoJSON helper
 const locationfind = id => geojsonData.features.find(x => x.id === id);
 
-
-// Time checker
-function timecheck(value, timediffMins: number): boolean {
-    if (!value) return false;
-    const input = new Date(value);
-    if (isNaN(input.getTime())) return false;
-    return input.getTime() - Date.now() >= timediffMins * 60 * 1000;
-}
 
 
 export default function Post(props: Props) {
