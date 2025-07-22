@@ -19,7 +19,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
 import { AntDesign } from '@expo/vector-icons';
 import Camera from '@/app/actions/camera';
-import {postBuffet, supplementPhoto} from '@/app/actions/postBuffet';
+import {postBuffet, supplementPhoto} from '@/app/actions/buffetActions';
 import { useGlobalContext } from '@/lib/global-provider';
 import locations from '@/assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -29,6 +29,8 @@ import { useNavigation } from '@react-navigation/native';       // ADDED: naviga
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
 import {uploadfile} from "@/lib/appwrite";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {timecheck} from '../../actions/timefunctions'
 
 
 // Theme colors
@@ -56,6 +58,7 @@ const LEVELS = [
 // GeoJSON helper
 const locationfind = id => geojsonData.features.find(x => x.id === id);
 
+
 // Time checker
 function timecheck(value, timediffMins: number): boolean {
     if (!value) return false;
@@ -63,6 +66,7 @@ function timecheck(value, timediffMins: number): boolean {
     if (isNaN(input.getTime())) return false;
     return input.getTime() - Date.now() >= timediffMins * 60 * 1000;
 }
+
 
 export default function Post(props: Props) {
     const navigation = useNavigation();                     // ADDED: get navigation instance

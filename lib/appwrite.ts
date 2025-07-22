@@ -7,15 +7,19 @@ import {
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
+import Buffet from "@/types";
 
 export const config = {
-    platform : 'com.roy.wasteless',
-    endpoint : 'https://cloud.appwrite.io/v1',
-    projectID: "6837256a001912254094",
-    databaseId: '6842a4150011ed4c7211',
-    buffetcollectionID: '6842aa210006eafe1e09',
-    bucketID: '685387bd00305b201702'
+    platform: 'com.roy.wasteless',
+    endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
+    projectID: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
+    databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
+    buffetcollectionID: process.env.EXPO_PUBLIC_APPWRITE_BUFFETS_COLLECTION_ID,
+    bucketID: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID
 }
+
+console.log(config)
+
 
 export const client = new Client()
 
@@ -92,6 +96,40 @@ export async function getCurrentUser() {
     }
 }
 
+export async function makeBuffet(newbuffet: Buffet) {
+    try {
+        const response = await databases.createDocument(
+            config.databaseId!,
+            config.buffetcollectionID!,
+            ID.unique(),
+            newbuffet
+        );
+
+        // Only include fields that exist in your Buffet interface
+        const buffet: Buffet = {
+            $id: response.$id,
+            $createdAt: response.$createdAt,
+            clearedby: new Date(response.clearedby),
+            leftover: response.leftover,
+            additionaldetails: response.additionaldetails,
+            level: response.level,
+            locationdetails: response.locationdetails,
+            locationname: response.locationname,
+            userID: response.userID,
+            locationcoordslat: response.locationcoordslat,
+            locationcoordslong: response.locationcoordslong,
+            photofileID: response.photofileID
+
+            // nuslocation: response.nuslocation // Only if in your schema/interface
+        };
+
+        return buffet;
+    } catch (error) {
+        console.error("Failed to create buffet:", error);
+        throw error;
+    }
+}
+
 export async function getLatestBuffets() {
     try{
         const result = await databases.listDocuments(
@@ -106,7 +144,6 @@ export async function getLatestBuffets() {
         console.error(error)
         return [];
     }
-
 }
 
 export async function getUsersBuffets(userID) {
@@ -127,7 +164,7 @@ export async function uploadfile(file, fileID) {
     try {
         const result = await storage.createFile(
             config.bucketID, // bucketId
-            fileID, // fileId
+            fileID, // fileID
             file // file
         );
 
@@ -136,7 +173,48 @@ export async function uploadfile(file, fileID) {
         console.error(error);
     }
 }
-//mini to make it less inefficienr
+
+export async function deleteBuffet (buffetID: string) {
+    try {
+        const result = await databases.deleteDocument(
+            config.databaseId!,
+            config.buffetcollectionID!,
+            buffetID
+        )
+        console.log("Buffet deleted", result);
+        return;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+export async function updateBuffet (leftover: number, buffetID: string) {
+    try {
+        const response = await databases.updateDocument(
+            config.databaseId,
+            config.buffetcollectionID,
+            buffetID,
+            {leftover: leftover}
+        );
+        console.log(response);
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+export async function updateFullBuffet (buffet, buffetID) {
+    try {
+        const response = await databases.updateDocument(
+            config.databaseId,
+            config.buffetcollectionID,
+            buffetID,
+            buffet);
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+//mini to make it less inefficient
 
 export async function getFileMini(fileID)  {
     try {

@@ -18,6 +18,7 @@ import { Buffet, UserLocation } from '../../../types';
 import calculateDistance from '@/app/actions/locationfunctions';
 import {Soup} from "lucide-react-native";
 
+
 export default function Index() {
     const userLocation = useUserLocation();
     const [rawBuffets, setRawBuffets] = useState<Buffet[]>([]);
@@ -96,6 +97,9 @@ export default function Index() {
         setSelectedBuffet(b);
         setModalVisible(true);
     };
+
+    //  Close modal
+
     const closeModal = () => {
         setModalVisible(false);
         setSelectedBuffet(null);
