@@ -14,7 +14,7 @@ import {
     Alert
 } from 'react-native';
 import * as Location from 'expo-location';
-import { getLatestBuffets } from '@/lib/appwrite';
+import {checkUserRating, getBuffetRating, getLatestBuffets} from '@/lib/appwrite';
 import { Buffet, UserLocation } from '../../../types';
 import calculateDistance from '@/app/actions/locationfunctions';
 import {Soup} from "lucide-react-native";
@@ -31,6 +31,9 @@ export default function Index() {
     const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null);
     const [refreshing, setRefreshing] = useState(false); // ← ADDED: pull-to-refresh state
     const {user} = useGlobalContext()
+    const [buffetRatings, setBuffetRatings] = useState([]);
+    const [ratingsLoading, setRatingsLoading] = useState(false);
+
 
     // Fetch data
     const fetchBuffets = useCallback(async () => {
@@ -97,10 +100,19 @@ export default function Index() {
         return location;
     }
 
-    const openModal = (b: Buffet) => {
+    const openModal = async (b: Buffet) => {
         setSelectedBuffet(b);
         setModalVisible(true);
+        setRatingsLoading(true);
+        try {
+            const results = await getBuffetRating(b.$id); // make sure getBuffetRating returns a promise that resolves to your rating array
+            setBuffetRatings(results);
+        } catch (error) {
+            setBuffetRatings([]); // fallback
+        }
+        setRatingsLoading(false);
     };
+
 
     //  Close modal
 
@@ -119,6 +131,11 @@ export default function Index() {
 
     //ratingfunctions
     async function handleRatingSubmit({rating, comment, buffetID}) {
+        const check = await checkUserRating(user?.$id, buffetID)
+        if (check.length > 0) {
+            Alert.alert("Cannot post another rating", "You can only post one rating per buffet");
+            return;
+        }
         try {
             setLoading(true);
             await postRating(
@@ -128,6 +145,13 @@ export default function Index() {
                 user.$id
             );
             Alert.alert("Thank you!", 'Your rating has been posted successfully');
+            //refresh page nowww
+            if (selectedBuffet) {
+                setRatingsLoading(true);
+                const results = await getBuffetRating(selectedBuffet.$id);
+                setBuffetRatings(results);
+                setRatingsLoading(false);
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -229,34 +253,50 @@ export default function Index() {
                         <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                             <Text style={styles.closeX}>✕</Text>
                         </TouchableOpacity>
-
                         {selectedBuffet && (
-                            <ScrollView>
-                                <Text style={styles.modalTitle}>Buffet Details</Text>
-                                <ScrollView
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                    style={{ marginVertical: 12 }}
-                                >
-                                    {selectedBuffet.photofileID.map(id => (
-                                        <Image
-                                            key={id}
-                                            source={{
-                                                uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
-                                            }}
-                                            style={styles.modalImage}
-                                        />
-                                    ))}
-                                </ScrollView>
-                                <Text style={styles.modalText}>
-                                    Location: {selectedBuffet.locationname}{'\n'}
-                                    Leftover: {selectedBuffet.leftover}%{'\n'}
-                                    Details: {selectedBuffet.additionaldetails || '—'}
-                                </Text>
-                                <View>
-                                    <RatingForm buffetID={selectedBuffet.$id} onSubmit={handleRatingSubmit} />
-                                </View>
-                            </ScrollView>
+                            <FlatList
+                                data={buffetRatings}
+                                refreshing={ratingsLoading}
+                                keyExtractor={(_, idx) => String(idx)}
+                                ListHeaderComponent={
+                                    <View>
+                                        <Text style={styles.modalTitle}>Buffet Details</Text>
+                                        <ScrollView
+                                            horizontal
+                                            showsHorizontalScrollIndicator={false}
+                                            style={{ marginVertical: 12 }}
+                                        >
+                                            {selectedBuffet.photofileID.map(id => (
+                                                <Image
+                                                    key={id}
+                                                    source={{
+                                                        uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
+                                                    }}
+                                                    style={styles.modalImage}
+                                                />
+                                            ))}
+                                        </ScrollView>
+                                        <Text style={styles.modalText}>
+                                            Location: {selectedBuffet.locationname}{'\n'}
+                                            Leftover: {selectedBuffet.leftover}%{'\n'}
+                                            Details: {selectedBuffet.additionaldetails || '—'}
+                                        </Text>
+                                        <RatingForm buffetID={selectedBuffet.$id} onSubmit={handleRatingSubmit} />
+                                        <Text>Ratings</Text>
+                                    </View>
+                                }
+                                ListEmptyComponent={
+                                    <Text>
+                                        No ratings yet. Be the first to rate!
+                                    </Text>
+                                }
+                                renderItem={({ item }) => (
+                                    <View>
+                                        <Text>⭐ {item.rating}</Text>
+                                        <Text>{item.comments}</Text>
+                                    </View>
+                                )}
+                            />
                         )}
                     </View>
                 </View>

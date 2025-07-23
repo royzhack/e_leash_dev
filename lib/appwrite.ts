@@ -138,7 +138,7 @@ export async function getLatestBuffets() {
             config.databaseId!,
             config.buffetcollectionID!,
             [Query.orderAsc('clearedby'),
-                Query.limit(20)]
+                Query.limit(30)]
         )
         return result.documents;
 
@@ -151,8 +151,8 @@ export async function getLatestBuffets() {
 export async function getUsersBuffets(userID) {
     try {
         const result = await databases.listDocuments(
-            config.databaseId,
-            config.buffetcollectionID,
+            config.databaseId!,
+            config.buffetcollectionID!,
             [Query.equal('userID', userID)]
         );
         return result.documents;
@@ -231,6 +231,41 @@ export async function makeRating(newrating: Rating) {
 
         return rating;
 
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+export async function getBuffetRating(buffetID: string) {
+    try {
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.ratingscollectionID!,
+            [
+                Query.equal('buffetID', buffetID)
+            ]
+        );
+
+        return result.documents;
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+export async function checkUserRating(userID, buffetID) {
+    try {
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.ratingscollectionID!,
+            [
+                Query.and([
+                    Query.equal('userID', userID),
+                    Query.equal('buffetID', buffetID)
+                ])
+            ]
+            );
+
+        return result.documents
     } catch(error) {
         console.error(error);
     }
