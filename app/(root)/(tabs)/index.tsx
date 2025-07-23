@@ -11,13 +11,16 @@ import {
     TouchableOpacity,
     Image,
     RefreshControl,
+    Alert
 } from 'react-native';
 import * as Location from 'expo-location';
 import { getLatestBuffets } from '@/lib/appwrite';
 import { Buffet, UserLocation } from '../../../types';
 import calculateDistance from '@/app/actions/locationfunctions';
 import {Soup} from "lucide-react-native";
-
+import RatingForm from "@/app/components/RatingForm";
+import {postRating} from "@/app/actions/ratingsActions";
+import {useGlobalContext} from "@/lib/global-provider";
 
 export default function Index() {
     const userLocation = useUserLocation();
@@ -27,6 +30,7 @@ export default function Index() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null);
     const [refreshing, setRefreshing] = useState(false); // ← ADDED: pull-to-refresh state
+    const {user} = useGlobalContext()
 
     // Fetch data
     const fetchBuffets = useCallback(async () => {
@@ -111,6 +115,24 @@ export default function Index() {
                 <ActivityIndicator size="large" color="#007AFF" />
             </View>
         );
+    }
+
+    //ratingfunctions
+    async function handleRatingSubmit({rating, comment, buffetID}) {
+        try {
+            setLoading(true);
+            await postRating(
+                rating,
+                comment,
+                buffetID,
+                user.$id
+            );
+            Alert.alert("Thank you!", 'Your rating has been posted successfully');
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -231,6 +253,9 @@ export default function Index() {
                                     Leftover: {selectedBuffet.leftover}%{'\n'}
                                     Details: {selectedBuffet.additionaldetails || '—'}
                                 </Text>
+                                <View>
+                                    <RatingForm buffetID={selectedBuffet.$id} onSubmit={handleRatingSubmit} />
+                                </View>
                             </ScrollView>
                         )}
                     </View>

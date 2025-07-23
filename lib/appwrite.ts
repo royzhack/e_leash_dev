@@ -7,7 +7,7 @@ import {
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
-import Buffet from "@/types";
+import {Buffet, Rating} from "@/types";
 
 export const config = {
     platform: 'com.roy.wasteless',
@@ -15,6 +15,8 @@ export const config = {
     projectID: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
     databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
     buffetcollectionID: process.env.EXPO_PUBLIC_APPWRITE_BUFFETS_COLLECTION_ID,
+    deletedBuffetcollectionID: process.env.EXPO_PUBLIC_APPWRITE_DELETEDBUFFETS_COLLECTION_ID,
+    ratingscollectionID: process.env.EXPO_PUBLIC_APPWRITE_RATINGS_COLLECTION_ID,
     bucketID: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID
 }
 
@@ -34,8 +36,7 @@ export const databases = new Databases(client)
 export const storage = new Storage(client)
 
 
-
-
+//user and auth functions
 export async function login() {
     try {
         const redirectUri = Linking.createURL("/(root)/(tabs)/profile")
@@ -96,6 +97,7 @@ export async function getCurrentUser() {
     }
 }
 
+//buffet functions
 export async function makeBuffet(newbuffet: Buffet) {
     try {
         const response = await databases.createDocument(
@@ -214,21 +216,27 @@ export async function updateFullBuffet (buffet, buffetID) {
     }
 }
 
-//mini to make it less inefficient
+//ratings functions
 
-export async function getFileMini(fileID)  {
+export async function makeRating(newrating: Rating) {
     try {
-        const result = await storage.getFilePreview(
-            config.bucketID,
-            fileID
-        )
-        console.log("result:", result);
+        const response = await databases.createDocument(
+            config.databaseId!,
+            config.ratingscollectionID!,
+            ID.unique(),
+            newrating
+        );
 
-        return result;
+        const rating = response.rating;
+
+        return rating;
+
     } catch(error) {
         console.error(error);
     }
 }
+
+
 
 
 
