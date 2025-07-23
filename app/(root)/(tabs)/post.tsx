@@ -29,8 +29,7 @@ import { useNavigation } from '@react-navigation/native';       // ADDED: naviga
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
 import {uploadfile} from "@/lib/appwrite";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import {timecheck} from '../../actions/timefunctions'
+
 
 
 // Theme colors
@@ -133,7 +132,8 @@ export default function Post(props: Props) {
                 photofileID
             );
             Alert.alert('Success', 'Buffet posted successfully.');
-            navigation.navigate('index');            // ADDED: go to Home screen
+            navigation.navigate('index');
+            // ADDED: go to Home screen
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Failed to upload and post buffet.');
