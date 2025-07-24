@@ -11,14 +11,17 @@ import {
     TouchableOpacity,
     Image,
     RefreshControl,
+    Alert
 } from 'react-native';
 import * as Location from 'expo-location';
-import { getLatestBuffets } from '@/lib/appwrite';
+import {checkUserRating, getBuffetRating, getLatestBuffets} from '@/lib/appwrite';
 import { Buffet, UserLocation } from '../../../types';
 import calculateDistance from '@/app/actions/locationfunctions';
 import {Soup} from "lucide-react-native";
+import RatingForm from "@/app/components/RatingForm";
+import {postRating} from "@/app/actions/ratingsActions";
+import {useGlobalContext} from "@/lib/global-provider";
 import {useFocusEffect} from '@react-navigation/native';
-
 
 export default function Index() {
     const userLocation = useUserLocation();
@@ -28,6 +31,10 @@ export default function Index() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null);
     const [refreshing, setRefreshing] = useState(false); // ← ADDED: pull-to-refresh state
+    const {user} = useGlobalContext()
+    const [buffetRatings, setBuffetRatings] = useState([]);
+    const [ratingsLoading, setRatingsLoading] = useState(false);
+
 
     // Fetch data
     const fetchBuffets = useCallback(async () => {
@@ -100,10 +107,19 @@ export default function Index() {
         return location;
     }
 
-    const openModal = (b: Buffet) => {
+    const openModal = async (b: Buffet) => {
         setSelectedBuffet(b);
         setModalVisible(true);
+        setRatingsLoading(true);
+        try {
+            const results = await getBuffetRating(b.$id); // make sure getBuffetRating returns a promise that resolves to your rating array
+            setBuffetRatings(results);
+        } catch (error) {
+            setBuffetRatings([]); // fallback
+        }
+        setRatingsLoading(false);
     };
+
 
     //  Close modal
 
@@ -118,6 +134,36 @@ export default function Index() {
                 <ActivityIndicator size="large" color="#007AFF" />
             </View>
         );
+    }
+
+    //ratingfunctions
+    async function handleRatingSubmit({rating, comment, buffetID}) {
+        const check = await checkUserRating(user?.$id, buffetID)
+        if (check.length > 0) {
+            Alert.alert("Cannot post another rating", "You can only post one rating per buffet");
+            return;
+        }
+        try {
+            setLoading(true);
+            await postRating(
+                rating,
+                comment,
+                buffetID,
+                user.$id
+            );
+            Alert.alert("Thank you!", 'Your rating has been posted successfully');
+            //refresh page nowww
+            if (selectedBuffet) {
+                setRatingsLoading(true);
+                const results = await getBuffetRating(selectedBuffet.$id);
+                setBuffetRatings(results);
+                setRatingsLoading(false);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -203,7 +249,6 @@ export default function Index() {
                         <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                             <Text style={styles.closeX}>✕</Text>
                         </TouchableOpacity>
-
                         {selectedBuffet && (
                             <ScrollView contentContainerStyle={styles.modalScroll}>
                                 <Text style={styles.modalTitle}>Buffet Details</Text>
@@ -257,7 +302,26 @@ export default function Index() {
                                             />
                                             <Text style={styles.progressText}>{selectedBuffet.leftover}%</Text>
                                         </View>
+                                      <FlatList
+                                        data={buffetRatings}
+                                        refreshing={ratingsLoading}
+                                        keyExtractor={(_, idx) => String(idx)}
+                                    <View>
+                                        <RatingForm buffetID={selectedBuffet.$id} onSubmit={handleRatingSubmit} />
+                                        <Text>Ratings</Text>
                                     </View>
+                                    <Text>
+                                        No ratings yet. Be the first to rate!
+                                    </Text>
+                                  renderItem={({ item }) => (
+                                    <View>
+                                        <Text>⭐ {item.rating}</Text>
+                                        <Text>{item.comments}</Text>
+                                    </View>
+                                )}
+                            />
+                                    </View>
+                                  
                                 </View>
                             </ScrollView>
                         )}

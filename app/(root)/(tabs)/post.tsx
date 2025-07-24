@@ -31,7 +31,6 @@ import { Client, ID, Storage } from 'react-native-appwrite';
 import {uploadfile} from "@/lib/appwrite";
 
 
-
 // Theme colors
 type Props = {};
 const theme = {
@@ -57,14 +56,6 @@ const LEVELS = [
 // GeoJSON helper
 const locationfind = id => geojsonData.features.find(x => x.id === id);
 
-
-// Time checker
-function timecheck(value, timediffMins: number): boolean {
-    if (!value) return false;
-    const input = new Date(value);
-    if (isNaN(input.getTime())) return false;
-    return input.getTime() - Date.now() >= timediffMins * 60 * 1000;
-}
 
 
 export default function Post(props: Props) {
