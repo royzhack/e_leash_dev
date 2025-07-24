@@ -249,9 +249,11 @@ export default function Index() {
                         <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                             <Text style={styles.closeX}>✕</Text>
                         </TouchableOpacity>
+
                         {selectedBuffet && (
                             <ScrollView contentContainerStyle={styles.modalScroll}>
                                 <Text style={styles.modalTitle}>Buffet Details</Text>
+
                                 <ScrollView
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
@@ -270,10 +272,14 @@ export default function Index() {
 
                                 <View style={styles.detailsContainer}>
                                     <View style={styles.titleRow}>
-                                        <Text style={styles.cardTitle}>{`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}</Text>
-                                        <Text style={styles.distanceTitle}>
-                                            | {(selectedBuffet.distance / 1000).toFixed(1)} km
+                                        <Text style={styles.cardTitle}>
+                                            {`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}
                                         </Text>
+                                        {selectedBuffet.distance != null && (
+                                            <Text style={styles.distanceTitle}>
+                                                | {(selectedBuffet.distance / 1000).toFixed(1)} km
+                                            </Text>
+                                        )}
                                     </View>
 
                                     <Text style={styles.nearestSmallLine}>
@@ -281,16 +287,17 @@ export default function Index() {
                                     </Text>
 
                                     <Text style={styles.amountLabel}>
-                                        {`Buffet was posted at ${new Date(selectedBuffet.$createdAt).toLocaleString('en-SG', {
-                                            timeStyle: 'short',
-                                        })}`}
+                                        {`Buffet was posted at ${new Date(
+                                            selectedBuffet.$createdAt
+                                        ).toLocaleTimeString('en-SG', { timeStyle: 'short' })}`}
                                     </Text>
 
                                     <Text style={styles.amountLabel}>
-                                        {`Buffet will be cleared by ${new Date(selectedBuffet.clearedby).toLocaleString('en-SG', {
-                                            timeStyle: 'short',
-                                        })}`}
+                                        {`Buffet clears by ${new Date(
+                                            selectedBuffet.clearedby
+                                        ).toLocaleTimeString('en-SG', { timeStyle: 'short' })}`}
                                     </Text>
+
                                     <View style={styles.progressRow}>
                                         <Text style={styles.amountLabel}>Amount left:</Text>
                                         <View style={styles.progressBar}>
@@ -300,34 +307,52 @@ export default function Index() {
                                                     { width: `${selectedBuffet.leftover}%` },
                                                 ]}
                                             />
-                                            <Text style={styles.progressText}>{selectedBuffet.leftover}%</Text>
+                                            <Text style={styles.progressText}>
+                                                {selectedBuffet.leftover}%
+                                            </Text>
                                         </View>
-                                      <FlatList
-                                        data={buffetRatings}
-                                        refreshing={ratingsLoading}
-                                        keyExtractor={(_, idx) => String(idx)}
-                                    <View>
-                                        <RatingForm buffetID={selectedBuffet.$id} onSubmit={handleRatingSubmit} />
-                                        <Text>Ratings</Text>
                                     </View>
-                                    <Text>
-                                        No ratings yet. Be the first to rate!
-                                    </Text>
-                                  renderItem={({ item }) => (
-                                    <View>
-                                        <Text>⭐ {item.rating}</Text>
-                                        <Text>{item.comments}</Text>
+
+                                    {/* Ratings section */}
+                                    <View style={styles.ratingsSection}>
+                                        <RatingForm
+                                            buffetID={selectedBuffet.$id}
+                                            onSubmit={handleRatingSubmit}
+                                        />
+
+                                        <Text style={styles.sectionHeader}>Ratings</Text>
+                                        {selectedBuffet && (
+                                        <FlatList
+                                            data={buffetRatings}
+                                            refreshing={ratingsLoading}
+                                            onRefresh={() => openModal(selectedBuffet)}
+                                            keyExtractor={(_, idx) => idx.toString()}
+                                            ListEmptyComponent={() => (
+                                                <Text style={styles.noRatingsText}>
+                                                    No ratings yet. Be the first to rate!
+                                                </Text>
+                                            )}
+                                            renderItem={({ item }) => (
+                                                <View style={styles.ratingItem}>
+                                                    <Text style={styles.ratingStars}>
+                                                        {'⭐'.repeat(item.rating)}
+                                                    </Text>
+                                                    {item.comments ? (
+                                                        <Text style={styles.ratingComment}>
+                                                            {item.comments}
+                                                        </Text>
+                                                    ) : null}
+                                                </View>
+                                            )}
+                                        />)}
                                     </View>
-                                )}
-                            />
-                                    </View>
-                                  
                                 </View>
                             </ScrollView>
                         )}
                     </View>
                 </View>
             </Modal>
+
         </SafeAreaView>
     );}
 
@@ -368,6 +393,36 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: '#0061FF',
+    },
+    sectionHeader: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: theme.primary,
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    ratingsSection: {
+        marginTop: 16,
+    },
+    noRatingsText: {
+        fontStyle: 'italic',
+        color: theme.textSecondary,
+        textAlign: 'center',
+        marginVertical: 12,
+    },
+    ratingItem: {
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEE',
+    },
+    ratingStars: {
+        fontSize: 16,
+        color: '#FFD700',
+    },
+    ratingComment: {
+        marginTop: 4,
+        fontSize: 14,
+        color: theme.textPrimary,
     },
     titleRow: { flexDirection: 'row', alignItems: 'center' },
     cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF' },
