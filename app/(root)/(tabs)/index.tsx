@@ -21,6 +21,7 @@ import {Soup} from "lucide-react-native";
 import RatingForm from "@/app/components/RatingForm";
 import {postRating} from "@/app/actions/ratingsActions";
 import {useGlobalContext} from "@/lib/global-provider";
+import {useFocusEffect} from '@react-navigation/native';
 
 export default function Index() {
     const userLocation = useUserLocation();
@@ -52,6 +53,12 @@ export default function Index() {
     useEffect(() => {
         fetchBuffets();
     }, [fetchBuffets]);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchBuffets();
+        }, [fetchBuffets])
+    );
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -172,12 +179,11 @@ export default function Index() {
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
-                        onRefresh={onRefresh} // ← ADDED: pull-to-refresh binding
+                        onRefresh={onRefresh}
                         tintColor="#007AFF"
                     />
                 }
                 renderItem={({ item, index }) => {
-                    // calculate minutes until clearing
                     const now = new Date();
                     const clearDate = new Date(item.clearedby);
                     const diffMins = Math.round((clearDate.getTime() - now.getTime()) / 60000);
@@ -187,7 +193,6 @@ export default function Index() {
                             activeOpacity={0.8}
                             onPress={() => openModal(item)}
                         >
-                            {/* Title row with name and distance */}
                             <View style={styles.titleRow}>
                                 <Text style={styles.cardTitle}>{item.locationname}</Text>
                                 {item.distance != null && (
@@ -197,19 +202,14 @@ export default function Index() {
                                 )}
                             </View>
 
-                            {/* Nearest buffet marker */}
                             {index === 0 && (
-                                <Text style={styles.nearestSmallLine}>
-                                    *Nearest buffet
-                                </Text>
+                                <Text style={styles.nearestSmallLine}>*Nearest buffet</Text>
                             )}
 
-                            {/* Restricted tag */}
                             {item.restricted && (
                                 <Text style={styles.restricted}>Restricted Access</Text>
                             )}
 
-                            {/* Amount left and progress bar */}
                             <View style={styles.progressRow}>
                                 <Text style={styles.amountLabel}>Amount left:</Text>
                                 <View style={styles.progressBar}>
@@ -223,25 +223,21 @@ export default function Index() {
                                 </View>
                             </View>
 
-                            {/* Clearing countdown if <20 mins */}
                             {diffMins > 0 && diffMins < 20 && (
                                 <Text style={styles.clearingText}>
                                     *Clearing in {diffMins} min
                                 </Text>
                             )}
-                            {diffMins < 0 && (
+                            {diffMins <= 0 && (
                                 <Text style={styles.clearingText}>
-                                    *Cleared {-1*diffMins} min ago
+                                    *Cleared {Math.abs(diffMins)} min ago
                                 </Text>
                             )}
-
-
                         </TouchableOpacity>
                     );
                 }}
             />
 
-            {/* Buffet Details Modal */}
             <Modal
                 visible={modalVisible}
                 animationType="slide"
@@ -254,57 +250,99 @@ export default function Index() {
                             <Text style={styles.closeX}>✕</Text>
                         </TouchableOpacity>
                         {selectedBuffet && (
-                            <FlatList
-                                data={buffetRatings}
-                                refreshing={ratingsLoading}
-                                keyExtractor={(_, idx) => String(idx)}
-                                ListHeaderComponent={
-                                    <View>
-                                        <Text style={styles.modalTitle}>Buffet Details</Text>
-                                        <ScrollView
-                                            horizontal
-                                            showsHorizontalScrollIndicator={false}
-                                            style={{ marginVertical: 12 }}
-                                        >
-                                            {selectedBuffet.photofileID.map(id => (
-                                                <Image
-                                                    key={id}
-                                                    source={{
-                                                        uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
-                                                    }}
-                                                    style={styles.modalImage}
-                                                />
-                                            ))}
-                                        </ScrollView>
-                                        <Text style={styles.modalText}>
-                                            Location: {selectedBuffet.locationname}{'\n'}
-                                            Leftover: {selectedBuffet.leftover}%{'\n'}
-                                            Details: {selectedBuffet.additionaldetails || '—'}
+                            <ScrollView contentContainerStyle={styles.modalScroll}>
+                                <Text style={styles.modalTitle}>Buffet Details</Text>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    style={styles.imageScroll}
+                                >
+                                    {selectedBuffet.photofileID.map(id => (
+                                        <Image
+                                            key={id}
+                                            source={{
+                                                uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
+                                            }}
+                                            style={styles.modalImage}
+                                        />
+                                    ))}
+                                </ScrollView>
+
+                                <View style={styles.detailsContainer}>
+                                    <View style={styles.titleRow}>
+                                        <Text style={styles.cardTitle}>{`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}</Text>
+                                        <Text style={styles.distanceTitle}>
+                                            | {(selectedBuffet.distance / 1000).toFixed(1)} km
                                         </Text>
+                                    </View>
+
+                                    <Text style={styles.nearestSmallLine}>
+                                        {`*${selectedBuffet.locationdetails}`}
+                                    </Text>
+
+                                    <Text style={styles.amountLabel}>
+                                        {`Buffet was posted at ${new Date(selectedBuffet.$createdAt).toLocaleString('en-SG', {
+                                            timeStyle: 'short',
+                                        })}`}
+                                    </Text>
+
+                                    <Text style={styles.amountLabel}>
+                                        {`Buffet will be cleared by ${new Date(selectedBuffet.clearedby).toLocaleString('en-SG', {
+                                            timeStyle: 'short',
+                                        })}`}
+                                    </Text>
+                                    <View style={styles.progressRow}>
+                                        <Text style={styles.amountLabel}>Amount left:</Text>
+                                        <View style={styles.progressBar}>
+                                            <View
+                                                style={[
+                                                    styles.progress,
+                                                    { width: `${selectedBuffet.leftover}%` },
+                                                ]}
+                                            />
+                                            <Text style={styles.progressText}>{selectedBuffet.leftover}%</Text>
+                                        </View>
+                                      <FlatList
+                                        data={buffetRatings}
+                                        refreshing={ratingsLoading}
+                                        keyExtractor={(_, idx) => String(idx)}
+                                    <View>
                                         <RatingForm buffetID={selectedBuffet.$id} onSubmit={handleRatingSubmit} />
                                         <Text>Ratings</Text>
                                     </View>
-                                }
-                                ListEmptyComponent={
                                     <Text>
                                         No ratings yet. Be the first to rate!
                                     </Text>
-                                }
-                                renderItem={({ item }) => (
+                                  renderItem={({ item }) => (
                                     <View>
                                         <Text>⭐ {item.rating}</Text>
                                         <Text>{item.comments}</Text>
                                     </View>
                                 )}
                             />
+                                    </View>
+                                  
+                                </View>
+                            </ScrollView>
                         )}
                     </View>
                 </View>
             </Modal>
         </SafeAreaView>
-    );
-}
+    );}
 
+    const theme = {
+    primary: '#0061FF',           // main action color (blue)
+    secondary: '#0061FF',         // secondary accent (green)
+    accent: '#0061FF',            // tertiary accent (amber)
+    background: '#FFFFFF',        // light grey background
+    surface: '#FFFFFF',           // card backgrounds, surfaces
+    overlay: 'rgba(0,0,0,0.1)',   // translucent overlay (subtle grey)
+    error: '#FF0000',             // error text and alerts
+    textPrimary: '#212529',       // dark primary text
+    textSecondary: '#FFFFFF',     // secondary text (muted)
+    refreshTint: '#007AFF'        // pull-to-refresh indicator
+};
 const styles = StyleSheet.create({
     topBar: {
         flexDirection: 'row',
@@ -363,27 +401,74 @@ const styles = StyleSheet.create({
         color: '#E53935',
         fontWeight: '600',
     },
+    modalText: { fontSize: 16, lineHeight: 24, color: '#333' },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.4)',
         justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-        backgroundColor: '#FFFFFF',
-        padding: 20,
+        height: '75%',                  // ← open 75% of screen
+        backgroundColor: theme.surface,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        maxHeight: '80%',
+        padding: 16,
     },
-    closeButton: { position: 'absolute', right: 16, top: 16, zIndex: 10 },
-    closeX: { fontSize: 20, color: '#333' },
-    modalTitle: {
+    closeButton: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        zIndex: 2,
+        color: theme.primary,
+    },
+    closeX: {
         fontSize: 20,
+        color: theme.primary,
+    },
+    modalScroll: {
+        paddingTop: 32,
+        paddingBottom: 24,
+    },
+    modalTitle: {
+        fontSize: 22,
         fontWeight: '700',
-        color: '#007AFF',
-        textAlign: 'center',
+        color: theme.textPrimary,
         marginBottom: 12,
     },
-    modalImage: { width: 200, height: 200, borderRadius: 12, marginRight: 10, backgroundColor: '#EEE' },
-    modalText: { fontSize: 16, lineHeight: 24, color: '#333' },
+    imageScroll: {
+        marginBottom: 16,
+    },
+    modalImage: {
+        width: 200,
+        height: 200,
+        borderRadius: 10,
+        marginRight: 10,
+        backgroundColor: '#ddd',
+    },
+    detailsContainer: {
+        paddingHorizontal: 8,
+    },
+    detailLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: theme.textSecondary,
+        marginTop: 12,
+    },
+    detailText: {
+        fontSize: 16,
+        color: theme.textPrimary,
+        marginTop: 4,
+    },
+    modalSlider: {
+        width: '100%',
+        height: 40,
+        marginTop: 8,
+    },
+    sliderValue: {
+        fontSize: 14,
+        color: theme.primary,
+        textAlign: 'right',
+        marginBottom: 12,
+    },
+
 });
