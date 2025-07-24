@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     Alert,
     SafeAreaView,
@@ -5,340 +6,444 @@ import {
     Text,
     TouchableOpacity,
     View,
-    ImageSourcePropType, Modal, StyleSheet, ActivityIndicator, FlatList
-} from "react-native"; //added Image Source Prop Type, but didnt use it
-import {getUsersBuffets, logout, updateBuffet} from "@/lib/appwrite";
-import { useGlobalContext } from "@/lib/global-provider";
-import { Image } from "react-native";
+    Image,
+    Modal,
+    FlatList,
+    ActivityIndicator,
+    StyleSheet,
+    RefreshControl,
+} from 'react-native';
 import {
     Bell,
     Edit,
-    LogOut,
     ChevronRight,
     UtensilsCrossed,
-    Salad
-} from "lucide-react-native";
-import React, {useEffect, useState} from "react";
-import {Buffet} from '../../../types'
-import {deleteBuffet} from "@/lib/appwrite";
-import {red} from "react-native-reanimated/lib/typescript/Colors";
+    Salad,
+    LogOut,
+    UserCircle2, Soup,
+} from 'lucide-react-native';
+import { getUsersBuffets, logout, updateBuffet, deleteBuffet } from '@/lib/appwrite';
+import { useGlobalContext } from '@/lib/global-provider';;
+import { Buffet } from '../../../types';
+import {useRouter} from "expo-router";
+import {useFocusEffect} from "@react-navigation/native";
 import Slider from "@react-native-community/slider";
-import EditBuffet from "@/app/actions/editBuffet";
-import { useRouter } from "expo-router";
 
-
-
-interface SettingsItemProp { //this is necessary to define the arguments of each function and their datatype
-    icon: React.ElementType;
-    title: string;
-    onPress?: () => void;
-    textStyle?: string;
-    showArrow?: boolean;
-}
-
-const SettingsItem = ({ //creating the settings function itself
-                          icon: Icon,
-                          title,
-                          onPress,
-                          textStyle,
-                          showArrow = true,
-                      }: SettingsItemProp) => (
-    <TouchableOpacity //firstly we have to wrap each element into a touchable opacity
-        onPress={onPress}
-        className="flex flex-row items-center justify-between py-3"
-    >
-        <View className="flex flex-row items-center gap-3">
-            <Icon size={24} color="#333" />
-            <Text
-                className={`text-lg font-rubik-medium text-black-300 ${textStyle}`} //styling of the text to be displayed
-            >
-                {title}
-            </Text> {/* the text it-self */ }
-        </View>
-
-        {showArrow && <ChevronRight size={20} color="#999" />} {/* Arrow for drop down*/}
-    </TouchableOpacity>
-);
-
-
-const Profile = () => {// assembling the page itself
+export default function Profile() {
     const { user, refetch } = useGlobalContext();
-    const [activeBuffetvisible, setActiveBuffetvisible] = useState(false);
-    const [usersBuffets, setUsersBuffets] = useState<Buffet[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [expandedBuffet, setExpandedBuffet] = useState<string | null>(null);
-    const [leftover, setleftover] = useState<number>(50);
-
     const router = useRouter();
+    const userID = user?.$id;
 
-    const handleLogout = async () => { //creating logout logic/function
-        const result = await logout();
-        if (result) {
-            Alert.alert("Success", "Logged out successfully");
+    const [loading, setLoading] = useState(false);
+    const [usersBuffets, setUsersBuffets] = useState<Buffet[]>([]);
+    const [refreshing, setRefreshing] = useState(false);
+    const [activeBuffetVisible, setActiveBuffetVisible] = useState(false);
+    const [expandedBuffet, setExpandedBuffet] = useState<string | null>(null);
+    const [sliderValue, setSliderValue] = useState(0);
+
+    // Fetch logic
+    const fetchMyBuffets = useCallback(async () => {
+        if (!userID) return;
+        setLoading(true);
+        try {
+            const docs = await getUsersBuffets(userID);
+            setUsersBuffets(docs);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, [userID]);
+
+    // Run once on mount
+    useEffect(() => {
+        fetchMyBuffets();
+    }, [fetchMyBuffets]);
+
+    // Also run on screen focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchMyBuffets();
+        }, [fetchMyBuffets])
+    );
+
+    // Pull to refresh
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchMyBuffets();
+        setRefreshing(false);
+    }, [fetchMyBuffets]);
+
+    const handleLogout = async () => {
+        const ok = await logout();
+        if (ok) {
+            Alert.alert('Success', 'Logged out');
             refetch();
         } else {
-            Alert.alert("Error", "Failed to logout");
+            Alert.alert('Error', 'Logout failed');
         }
-    };
-
-    useEffect(() => {
-        (async () => {
-            try {
-                console.log("UserID:", userID);
-                setLoading(true);
-                const buffets = await getUsersBuffets(userID);
-                console.log('buffets', buffets);
-                setUsersBuffets(buffets);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
-        })
-        ();
-
-    }, []);
+    }
 
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color={theme.primary} />
             </View>
         );
     }
 
-    const userID = user?.$id;
-
-    const closeActiveBuffetModal = () => {
-        setActiveBuffetvisible(false); // close the modal
-        console.log("modal closed");
-    };
-
-    const openActiveBuffetModal = () => {
-        setActiveBuffetvisible(true);
-    }
-
-    const levelfix = (level: number) =>
-        level < 0 ? `B${-level}` : level;
-
-
-    return ( //what u want it to show so u return
-        <SafeAreaView className="h-full bg-white"> {/*first wrap everything in a safe area view*/ }
-            <ScrollView //then a scroll view
-                showsVerticalScrollIndicator={true}
-                className="pb-32 px-7"
+    return (
+        <SafeAreaView style={styles.container}>
+            {/* Top Bar */}
+            <View style={styles.topBar}>
+                <Text style={styles.title}>Profile</Text>
+                <UserCircle2 size={24} color={'#0061FF'} />
+            </View>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={{ paddingBottom: 32 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor={theme.refreshTint}
+                    />
+                }
             >
-                {/* Top Bar */}
-                <View className="flex flex-row items-center justify-between mt-5">
-                    <Text className="text-xl font-rubik-bold">Profile</Text>
-                    <Bell size={20} color="#000" />
+                {/* Avatar */}
+                <View style={styles.avatarWrapper}>
+                    <Image source={{ uri: user?.avatar }} style={styles.avatar} />
+                    <Text style={styles.userName}>{user?.name}</Text>
                 </View>
 
-                {/* Avatar + Name */}
-                <View className="flex flex-row justify-center mt-5">
-                    <View className="flex flex-col items-center relative mt-5">
-                        <Image
-                            source={{ uri: user?.avatar }} //grabs from user which is from useglobalcontext
-                            className="size-44 relative rounded-full"
-                        />
-                        <TouchableOpacity className="absolute bottom-11 right-2">
-                            <Edit size={36} color="#000" />
-                        </TouchableOpacity>
-                        <Text className="text-2xl font-rubik-bold mt-2">
-                            {user?.name}
-                        </Text>
+                {/* Active Buffets */}
+                <TouchableOpacity
+                    style={[styles.card, styles.cardRow]}
+                    onPress={() => setActiveBuffetVisible(true)}
+                >
+                    <View style={styles.titleRow}>
+                        <Salad size={20} color={theme.primary} />
+                        <Text style={styles.cardTitle}>My Active Buffets</Text>
                     </View>
-                </View>
-
-                <View className="flex flex-col mt-10">
-                    <SettingsItem icon={Salad} title="Active Buffets" onPress={openActiveBuffetModal}/>
-                       <Modal
-                        visible={activeBuffetvisible}
-                        animationType="slide"
-                        transparent={true}
-                        onRequestClose={closeActiveBuffetModal}
-                       >
-                           <View style={styles.modalOverlay}>
-                               <View style={styles.modalContent}>
-                                   <View className = "mt-4 py-4">
-                                       <TouchableOpacity onPress={closeActiveBuffetModal} style={styles.closeButton}>
-                                           <Text style={styles.closeButtonText}>X</Text>
-                                       </TouchableOpacity>
-                                   </View>
-                                    <Text style = {styles.heading}>Currently Active Buffets</Text>
-                                   <FlatList
-                                       data={usersBuffets}
-                                       keyExtractor={item => item.$id}
-                                       contentContainerStyle={{ paddingVertical: 16 }}
-                                       renderItem={({ item }) => {
-                                           const isExpanded = expandedBuffet === item.$id;
-                                          return (
-                                               <View style={styles.card}>
-                                                   <TouchableOpacity
-                                                       onPress={() => setExpandedBuffet(isExpanded ? null : item.$id)}>
-                                                       <Text style={styles.title}>
-                                                           Level: {levelfix(item.level)}
-                                                       </Text>
-                                                       <Text>Leftover: {item.leftover}%</Text>
-                                                       <Text>Location: {item.locationname}</Text>
-                                                       <Text>Details: {item.additionaldetails || '—'}</Text>
-                                                       <Text>
-                                                           Cleared by:{' '}
-                                                           {new Date(item.clearedby).toLocaleString('en-SG', {
-                                                               dateStyle: 'medium', timeStyle: 'short',
-                                                           })}
-                                                       </Text>
-
-                                                       {isExpanded && (
-                                                           <View style={styles.dropdownMenu}>
-                                                               <View style={styles.sliderContainer}>
-                                                                   <Slider
-                                                                       style={{ flex: 1 }}
-                                                                       minimumValue={0}
-                                                                       maximumValue={100}
-                                                                       step={5}
-                                                                       value={leftover}
-                                                                       onValueChange={setleftover}
-                                                                       minimumTrackTintColor={theme.primary}
-                                                                   />
-                                                                   <Text style={styles.sliderValue}>{leftover}%</Text>
-                                                               </View>
-                                                               <TouchableOpacity onPress={() => {
-                                                                   updateBuffet(leftover, item.$id);
-                                                                   setleftover(50);
-                                                               }}>
-                                                                   <Text style={styles.details}>Update Buffet</Text>
-                                                               </TouchableOpacity>
-                                                               <TouchableOpacity onPress={() => {
-                                                                   closeActiveBuffetModal();
-                                                                   router.push({
-                                                                   pathname: "/actions/editBuffet",
-                                                                   params: { buffet: JSON.stringify(item) }
-                                                               })
-                                                               }}>
-                                                                   <Text style={styles.details}>Edit Buffet</Text>
-                                                               </TouchableOpacity>
-                                                               <TouchableOpacity onPress={() => {deleteBuffet(item.$id)
-                                                               }}>
-                                                                   <Text style={styles.details}>Delete buffet</Text>
-                                                               </TouchableOpacity>
-                                                           </View>
-                                                       )}
-                                                   </TouchableOpacity>
-                                               </View>
-                                           )
-                                        }
-                                       }
-                                   />
-                               </View>
-                           </View>
-
-                       </Modal>
-                    <SettingsItem icon={UtensilsCrossed} title="Past Buffets"/>
-
-                </View>
-
-
+                    <ChevronRight size={25} color= '#0061FF' />
+                </TouchableOpacity>
+                {/* Past Buffets placeholder */}
+                <TouchableOpacity
+                    style={[styles.card, styles.cardRow]}
+                >
+                    <View style={styles.titleRow}>
+                        <UtensilsCrossed size={20} color={theme.primary} />
+                        <Text style={styles.cardTitle}>My Past Buffets</Text>
+                    </View>
+                    <ChevronRight size={25} color= '#0061FF' />
+                </TouchableOpacity>
 
                 {/* Logout */}
-                <View className="flex flex-col border-t mt-5 pt-5 border-primary-200"> {/*adds the border  */}
-                    <SettingsItem
-                        icon={LogOut}
-                        title="Logout"
-                        textStyle="text-danger"
-                        showArrow={false}
-                        onPress={handleLogout}
-                    />
-                </View>
+                <TouchableOpacity style={styles.card} onPress={handleLogout}>
+                    <View style={styles.titleRow}>
+                        <LogOut size={20} color={theme.primary} />
+                        <Text style={[styles.cardTitle, { color: theme.error }]}>Logout</Text>
+                    </View>
+                </TouchableOpacity>
             </ScrollView>
+
+            {/* Active Buffets Modal */}
+            <Modal
+                visible={activeBuffetVisible}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setActiveBuffetVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setActiveBuffetVisible(false)}
+                        >
+                            <Text style={styles.closeX}>✕</Text>
+                        </TouchableOpacity>
+
+                        <Text style={styles.modalTitle}>Your Active Buffets</Text>
+
+                        <FlatList
+                            data={usersBuffets}
+                            keyExtractor={b => b.$id}
+                            contentContainerStyle={{ paddingVertical: 12 }}
+                            renderItem={({ item }) => {
+                                const isExpanded = expandedBuffet === item.$id;
+                                return (
+                                    <View style={styles.card}>
+                                        <TouchableOpacity
+                                            activeOpacity={0.8}
+                                            onPress={() =>
+                                                setExpandedBuffet(isExpanded ? null : item.$id)
+                                            }
+                                        >
+                                            {/* Buffet Info */}
+                                                    <ScrollView
+                                                        horizontal
+                                                        showsHorizontalScrollIndicator={false}
+                                                        style={styles.imageScroll}
+                                                    >
+                                                        {item.photofileID.map(id => (
+                                                            <Image
+                                                                key={id}
+                                                                source={{
+                                                                    uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
+                                                                }}
+                                                                style={styles.modalImage}
+                                                            />
+                                                        ))}
+                                                    </ScrollView>
+
+                                                    <View style={styles.titleRow}>
+                                                <Text style={styles.modalcardTitle}>{item.locationname}</Text>
+                                            </View>
+                                            <Text style={styles.nearestSmallLine}>
+                                                {`*${item.locationdetails}`}
+                                            </Text>
+
+                                            <Text style={styles.amountLabel}>
+                                                {`Buffet was posted at ${new Date(item.$createdAt).toLocaleString('en-SG', {
+                                                    timeStyle: 'short',
+                                                })}`}
+                                            </Text>
+
+                                            <Text style={styles.amountLabel}>
+                                                {`Buffet will be cleared by ${new Date(item.clearedby).toLocaleString('en-SG', {
+                                                    timeStyle: 'short',
+                                                })}`}
+                                            </Text>
+                                            <View style={styles.progressRow}>
+                                                <Text style={styles.amountLabel}>Amount left:</Text>
+                                                <View style={styles.progressBar}>
+                                                    <View
+                                                        style={[
+                                                            styles.progress,
+                                                            { width: `${item.leftover}%` },
+                                                        ]}
+                                                    />
+                                                    <Text style={styles.progressText}>{item.leftover}%</Text>
+                                                </View>
+                                            </View>
+
+
+
+                                            {isExpanded && (
+                                                <View style={styles.dropdownMenu}>
+                                                    {/* Leftover Slider */}
+                                                    <View style={styles.sliderContainer}>
+                                                        <Slider
+                                                            style={{ flex: 1 }}
+                                                            minimumValue={0}
+                                                            maximumValue={100}
+                                                            step={5}
+                                                            value={sliderValue}
+                                                            onValueChange={setSliderValue}            // update local state live…
+                                                            onSlidingComplete={async (value) => {     // …and persist when they stop sliding
+                                                                try {
+                                                                    await updateBuffet(value, item.$id);
+                                                                } catch (err) {
+                                                                    console.error('Failed to update buffet:', err);
+                                                                    Alert.alert('Update failed', 'Could not save new leftover amount.');
+                                                                }
+                                                            }}
+                                                            minimumTrackTintColor={theme.primary}
+                                                        />
+                                                        <Text style={styles.sliderValue}>{sliderValue}%</Text>
+                                                    </View>
+
+                                                    <TouchableOpacity
+                                                        onPress={() =>
+                                                            router.push({
+                                                                pathname: '/actions/editBuffet',
+                                                                params: {
+                                                                    buffet: JSON.stringify(item),
+                                                                },
+                                                            })
+                                                        }
+                                                    >
+                                                        <Text style={styles.detailText}>
+                                                            Edit Buffet
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        onPress={() => deleteBuffet(item.$id)}
+                                                    >
+                                                        <Text style={[styles.detailText, { color: theme.error }]}>
+                                                            Delete Buffet
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                );
+                            }}
+                        />
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
-};
-
-export default Profile;
-
+}
 const theme = {
-    primary: '#0061FF',
-    overlay: 'rgba(37,99,235,0.3)',
+    primary: '#0061FF',           // main action color (blue)
+    secondary: '#0061FF',         // secondary accent (green)
+    accent: '#0061FF',            // tertiary accent (amber)
+    background: '#FFFFFF',        // light grey background
+    surface: '#FFFFFF',           // card backgrounds, surfaces
+    overlay: 'rgba(0,0,0,0.1)',   // translucent overlay (subtle grey)
+    error: '#FF0000',             // error text and alerts
+    textPrimary: '#212529',       // dark primary text
+    textSecondary: '#FFFFFF',     // secondary text (muted)
+    refreshTint: '#007AFF'        // pull-to-refresh indicator
 };
-
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16, paddingTop: 40 },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    heading: { fontSize: 24, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
-    count: { fontSize: 16, marginBottom: 12, textAlign: 'center' },
-    card: {
-        padding: 12,
-        marginBottom: 12,
-        borderRadius: 8,
-        backgroundColor: '#f0f0f0',
+    topBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
     },
-    title: { fontSize: 18, fontWeight: '700' },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContent: {
-        backgroundColor: 'white',
-        padding: 20,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        height: '75%', // Modal covers 3/4 of the screen
-    },
-    modalContentScroll: {
-        flexGrow: 1,
-    },
-    closeButton: {
-        position: 'absolute',
-        top: 5,
-        right: 5,
-        backgroundColor: 'red',
-        borderRadius: 12,
-        padding: 5,
-    },
-    closeButtonText: {
-        color: 'white',
+    title: {
         fontSize: 20,
         fontWeight: 'bold',
+        color: '#0061FF',
     },
-    image: {
-        width: 200,
-        height: 200,
-        borderRadius: 10,
-        marginVertical: 20,
+                                modalImage: {
+                                width: 200,
+                                height: 200,
+                                borderRadius: 10,
+                                marginRight: 10,
+                                backgroundColor: '#ddd',
+                            },
+    nearestSmallLine: { fontSize: 12, color: '#007AFF', fontWeight: '600', marginTop: 4 },
+    container: { flex: 1, backgroundColor: '#F2F5FA' },
+                                modalScroll: {
+                                paddingTop: 32,
+                                paddingBottom: 24,
+                            },
+                                modalTitle: {
+                                fontSize: 22,
+                                fontWeight: '700',
+                                color: theme.textPrimary,
+                                marginBottom: 12,
+                            },
+                                imageScroll: {
+                                marginBottom: 16,
+                            },
+
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    avatarWrapper: {
+        alignItems: 'center',
+        marginVertical: 24,
     },
-    text: {
-        fontSize: 16,
-        marginVertical: 10,
+    avatar: {
+        width: 88,
+        height: 88,
+        borderRadius: 44,
+        backgroundColor: '#ddd',
     },
-    details: {
-        fontSize: 16,
-        marginBottom: 20,
-        color: 'red'
+    editAvatar: {
+        position: 'absolute',
+        bottom: 0,
+        right: 96 / 2 - 12,
     },
-    dropdownMenu: {
-        padding: 12,
+    userName: {
+        marginTop: 12,
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#0061FF',
+    },
+    card: {
+        backgroundColor: '#FFFFFF',
+        marginHorizontal: 16,
         marginBottom: 12,
+        borderRadius: 12,
+        padding: 16,
+        paddingRight: 30,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    cardRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+    amountLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginRight: 8 },
+    progressBar: {
+        flex: 1,
+        height: 10,
+        backgroundColor: '#E5E5EA',
+        borderRadius: 5,
+        overflow: 'hidden',
+    },
+    progress: {
+        height: '100%',
+        backgroundColor: '#007AFF',
+    },
+    progressText: {
+        position: 'absolute',
+        alignSelf: 'center',
+        top: -2,
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
+    titleRow: { flexDirection: 'row', alignItems: 'center' },
+    cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF', flex: 1, paddingLeft: 8 },
+    modalcardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF', flex: 1},
+    detailText: { fontSize: 14, color: '#212529', marginTop: 4 },
+    dropdownMenu: {
+        marginTop: 12,
+        padding: 12,
         borderRadius: 8,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#FFFFFF',
+        borderColor: '#E5E5EA',
+        borderWidth: 1,
     },
     sliderContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
-        backgroundColor: theme.overlay,
+        marginBottom: 12,
     },
-    sliderValue: { marginLeft: 12, color: theme.primary },
-    textInput: {
-        borderWidth: 1,
-        borderColor: theme.primary,
-        borderRadius: 6,
-        padding: 10,
-        minHeight: 80,
-        textAlignVertical: 'top',
-        backgroundColor: theme.overlay,
-        margin: 12,
-        color: theme.primary,
+    sliderValue: { marginLeft: 12, color: '#0061FF', fontWeight: '600' },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        height: '75%',
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 16,
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        zIndex: 2,
+        backgroundColor: theme.error,
+        borderRadius: 12,
+        padding: 4,
+    },
+    closeX: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#0061FF',
+        marginBottom: 16,
+        textAlign: 'center',
     },
 });

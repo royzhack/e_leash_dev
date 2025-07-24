@@ -1,5 +1,4 @@
-// app/screens/Index.tsx
-import React, { useEffect, useState } from 'react'; //
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     Text,
     View,
@@ -9,246 +8,403 @@ import {
     StyleSheet,
     Modal,
     ScrollView,
-    TouchableOpacity
+    TouchableOpacity,
+    Image,
+    RefreshControl,
 } from 'react-native';
 import * as Location from 'expo-location';
-import {getFileMini, getLatestBuffets} from '@/lib/appwrite';
-import {Buffet, UserLocation} from '../../../types'
-import calculateDistance from "@/app/actions/locationfunctions";
-
-
-
+import { getLatestBuffets } from '@/lib/appwrite';
+import { Buffet, UserLocation } from '../../../types';
+import calculateDistance from '@/app/actions/locationfunctions';
+import {Soup} from "lucide-react-native";
+import {useFocusEffect} from '@react-navigation/native';
 
 
 export default function Index() {
-    //GetLocation();
     const userLocation = useUserLocation();
     const [rawBuffets, setRawBuffets] = useState<Buffet[]>([]);
     const [buffets, setBuffets] = useState<Buffet[]>([]);
     const [loading, setLoading] = useState(true);
-    const [modalVisible, setModalVisible] = useState(false); // 1. State to control modal visibility
-    const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null); // 2. State to hold selected buffet
-    const [imgUrls, setImgUrls] = useState<Record<string, string>>({});
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null);
+    const [refreshing, setRefreshing] = useState(false); // ← ADDED: pull-to-refresh state
 
-    //  Fetch from Appwrite on mount
-    useEffect(() => {
-        (async () => {
-            try {
-                setLoading(true);
-                const docs = await getLatestBuffets();
-                setRawBuffets(docs);
-                const newImgUrls: Record<string, string> = {};
-                for (const buffet of docs) {
-                    const fileId = buffet.photofileID[1]; // assuming 'uri' is the file ID in Appwrite
-                    const url = await getFileMini(fileId); // get the mini preview URL
-                    newImgUrls[buffet.$id] = url; // save the URL by the buffet ID
-                }
-
-                setImgUrls(newImgUrls);
-                console.log(imgUrls)
-            } catch (error) {
-                console.error(error);
-            } finally {
+    // Fetch data
+    const fetchBuffets = useCallback(async () => {
+        setLoading(true);
+        try {
+            const docs = await getLatestBuffets();
+            setRawBuffets(docs);
+            setBuffets(docs);
+        } catch (e) {
+            console.error(e);
+        } finally {
             setLoading(false);
         }
-
-        })();
     }, []);
 
-    //  Recompute distances whenever location or buffets change
+    useEffect(() => {
+        fetchBuffets();
+    }, [fetchBuffets]);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchBuffets();
+        }, [fetchBuffets])
+    );
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchBuffets();
+        setRefreshing(false);
+    }, [fetchBuffets]);
+
+    // Recompute distances when data or location changes
     useEffect(() => {
         if (!userLocation || rawBuffets.length === 0) return;
-
-        const withDistance = rawBuffets // rawBuffets hold all the  buffets after getting them
-            .map(b => ({ // map each buffet to a new object with distance
+        const withDistance = rawBuffets
+            .map((b) => ({
                 ...b,
                 distance: calculateDistance(
                     userLocation.latitude,
                     userLocation.longitude,
                     b.locationcoordslong,
                     b.locationcoordslat
-                )
+                ),
             }))
-            .sort((a, b) => (a.distance! - b.distance!)); // sort by distance, ascending order/
+            .sort((a, b) => a.distance! - b.distance!);
+        setBuffets(withDistance);
+    }, [userLocation, rawBuffets]);
 
-        setBuffets(withDistance); // set buffets to the new value with distance computed
-    }, [userLocation, rawBuffets]); // only recompute when user location or buffets change/ power of useEffect
+    function useUserLocation(): UserLocation | null {
+        const [location, setLocation] = useState<UserLocation | null>(null);
+        useEffect(() => {
+            let sub: Location.LocationSubscription;
+            (async () => {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                    console.warn('Location permission denied');
+                    return;
+                }
+                sub = await Location.watchPositionAsync(
+                    { accuracy: Location.Accuracy.High, distanceInterval: 5 },
+                    loc =>
+                        setLocation({
+                            latitude: loc.coords.latitude,
+                            longitude: loc.coords.longitude,
+                        })
+                );
+            })();
+            return () => sub?.remove();
+        }, []);
+        return location;
+    }
+
+    const openModal = (b: Buffet) => {
+        setSelectedBuffet(b);
+        setModalVisible(true);
+    };
+
+    //  Close modal
+
+    const closeModal = () => {
+        setModalVisible(false);
+        setSelectedBuffet(null);
+    };
 
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color="#007AFF" />
             </View>
         );
     }
 
-
-    function useUserLocation(): UserLocation | null { // function to get UserLocation object (with latitude and longitude) or null if we haven’t got location yet.
-        const [location, setLocation] = useState<UserLocation | null>(null); //create a state location and set it take either User location and null <UserLocation | null> this tell you that the state can only hold these two objects , so (null) tells us that its intital value is null
-
-
-        useEffect(() => {
-            let subscriber: Location.LocationSubscription;
-
-            (async () => {
-                const { status } = await Location.requestForegroundPermissionsAsync(); //ask for permission to access location/
-                if (status !== 'granted') { //if permission is denied
-                    console.warn('Location permission denied');
-                    return;
-                }
-                subscriber = await Location.watchPositionAsync( //start watching location and update subscriber with the location
-                    { accuracy: Location.Accuracy.High, distanceInterval: 5 }, //accuracy is high and distance interval is 5 meters
-                    (loc) => {
-                        setLocation({
-                            latitude: loc.coords.latitude,
-                            longitude: loc.coords.longitude,
-                        });
-                    }
-                );
-            })();
-
-            return () => subscriber?.remove();
-        }, []);
-
-        return location; //return the state location, last position of the user
-    }
-
-    const levelfix = (level: number) =>
-        level < 0 ? `B${-level}` : level;
-
-    //  Open modal with selected buffet details
-    const openModal = (buffet: Buffet) => {
-        setSelectedBuffet(buffet); // set the selected buffet
-        setModalVisible(true); // open the modal
-    };
-
-
-    //  Close modal
-    const closeModal = () => {
-        setModalVisible(false); // close the modal
-        setSelectedBuffet(null); // reset the selected buffet
-    };
-
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.heading}>Welcome to NUS WasteLess</Text>
-            <Text style={styles.count}>
-                Found {buffets.length} buffet{buffets.length === 1 ? '' : 's'}
-            </Text>
+            <View style={styles.topBar}>
+                <Text style={styles.title}>Active Buffets</Text>
+                <Soup size={24} color={'#0061FF'} />
+            </View>
             <FlatList
                 data={buffets}
                 keyExtractor={item => item.$id}
-                contentContainerStyle={{ paddingVertical: 16 }}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => openModal(item)}>
-                        <View style={styles.card}>
-                            <Text style={styles.title}>
-                                Level: {levelfix(item.level)}
-                            </Text>
-                            <Text>Leftover: {item.leftover}%</Text>
-                            <Text>Location: {item.locationname}</Text>
-                            <Text>Details: {item.additionaldetails || '—'}</Text>
-                            <Text>
-                                Cleared by:{' '}
-                                {new Date(item.clearedby).toLocaleString('en-SG', {
-                                    dateStyle: 'medium', timeStyle: 'short',
-                                })}
-                            </Text>
-                            {item.distance != null && (
-                                <Text>
-                                    Distance: {item.distance.toFixed(0)} m
+                contentContainerStyle={{ paddingVertical: 12 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor="#007AFF"
+                    />
+                }
+                renderItem={({ item, index }) => {
+                    const now = new Date();
+                    const clearDate = new Date(item.clearedby);
+                    const diffMins = Math.round((clearDate.getTime() - now.getTime()) / 60000);
+                    return (
+                        <TouchableOpacity
+                            style={styles.card}
+                            activeOpacity={0.8}
+                            onPress={() => openModal(item)}
+                        >
+                            <View style={styles.titleRow}>
+                                <Text style={styles.cardTitle}>{item.locationname}</Text>
+                                {item.distance != null && (
+                                    <Text style={styles.distanceTitle}>
+                                        | {(item.distance / 1000).toFixed(1)} km
+                                    </Text>
+                                )}
+                            </View>
+
+                            {index === 0 && (
+                                <Text style={styles.nearestSmallLine}>*Nearest buffet</Text>
+                            )}
+
+                            {item.restricted && (
+                                <Text style={styles.restricted}>Restricted Access</Text>
+                            )}
+
+                            <View style={styles.progressRow}>
+                                <Text style={styles.amountLabel}>Amount left:</Text>
+                                <View style={styles.progressBar}>
+                                    <View
+                                        style={[
+                                            styles.progress,
+                                            { width: `${item.leftover}%` },
+                                        ]}
+                                    />
+                                    <Text style={styles.progressText}>{item.leftover}%</Text>
+                                </View>
+                            </View>
+
+                            {diffMins > 0 && diffMins < 20 && (
+                                <Text style={styles.clearingText}>
+                                    *Clearing in {diffMins} min
                                 </Text>
                             )}
-                        </View>
-                    </TouchableOpacity>
-                )}
+                            {diffMins <= 0 && (
+                                <Text style={styles.clearingText}>
+                                    *Cleared {Math.abs(diffMins)} min ago
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    );
+                }}
             />
 
-            {/* Modal for displaying buffet details */}
             <Modal
                 visible={modalVisible}
                 animationType="slide"
-                transparent={true}
+                transparent
                 onRequestClose={closeModal}
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <ScrollView contentContainerStyle={styles.modalContentScroll}>
-                            <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                                <Text style={styles.closeButtonText}>X</Text>
-                            </TouchableOpacity>
-                            {selectedBuffet && (
-                                <>
-                                    <Text style={styles.title}>Buffet Details</Text>
-                                    <Text style={styles.text}>Here are the additional details of the buffet.</Text>
-                                    <Text style={styles.details}>
-                                        Leftover: {selectedBuffet.leftover}% {"\n"}
-                                        Level: {levelfix(selectedBuffet.level)} {"\n"}
-                                        Location: {selectedBuffet.locationname}
+                        <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                            <Text style={styles.closeX}>✕</Text>
+                        </TouchableOpacity>
+
+                        {selectedBuffet && (
+                            <ScrollView contentContainerStyle={styles.modalScroll}>
+                                <Text style={styles.modalTitle}>Buffet Details</Text>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    style={styles.imageScroll}
+                                >
+                                    {selectedBuffet.photofileID.map(id => (
+                                        <Image
+                                            key={id}
+                                            source={{
+                                                uri: `https://fra.cloud.appwrite.io/v1/storage/buckets/685387bd00305b201702/files/${id}/preview?project=6837256a001912254094`,
+                                            }}
+                                            style={styles.modalImage}
+                                        />
+                                    ))}
+                                </ScrollView>
+
+                                <View style={styles.detailsContainer}>
+                                    <View style={styles.titleRow}>
+                                        <Text style={styles.cardTitle}>{`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}</Text>
+                                        <Text style={styles.distanceTitle}>
+                                            | {(selectedBuffet.distance / 1000).toFixed(1)} km
+                                        </Text>
+                                    </View>
+
+                                    <Text style={styles.nearestSmallLine}>
+                                        {`*${selectedBuffet.locationdetails}`}
                                     </Text>
-                                </>
-                            )}
-                        </ScrollView>
+
+                                    <Text style={styles.amountLabel}>
+                                        {`Buffet was posted at ${new Date(selectedBuffet.$createdAt).toLocaleString('en-SG', {
+                                            timeStyle: 'short',
+                                        })}`}
+                                    </Text>
+
+                                    <Text style={styles.amountLabel}>
+                                        {`Buffet will be cleared by ${new Date(selectedBuffet.clearedby).toLocaleString('en-SG', {
+                                            timeStyle: 'short',
+                                        })}`}
+                                    </Text>
+                                    <View style={styles.progressRow}>
+                                        <Text style={styles.amountLabel}>Amount left:</Text>
+                                        <View style={styles.progressBar}>
+                                            <View
+                                                style={[
+                                                    styles.progress,
+                                                    { width: `${selectedBuffet.leftover}%` },
+                                                ]}
+                                            />
+                                            <Text style={styles.progressText}>{selectedBuffet.leftover}%</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </ScrollView>
+                        )}
                     </View>
                 </View>
             </Modal>
         </SafeAreaView>
-    );
-}
+    );}
 
-
+    const theme = {
+    primary: '#0061FF',           // main action color (blue)
+    secondary: '#0061FF',         // secondary accent (green)
+    accent: '#0061FF',            // tertiary accent (amber)
+    background: '#FFFFFF',        // light grey background
+    surface: '#FFFFFF',           // card backgrounds, surfaces
+    overlay: 'rgba(0,0,0,0.1)',   // translucent overlay (subtle grey)
+    error: '#FF0000',             // error text and alerts
+    textPrimary: '#212529',       // dark primary text
+    textSecondary: '#FFFFFF',     // secondary text (muted)
+    refreshTint: '#007AFF'        // pull-to-refresh indicator
+};
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16, paddingTop: 40 },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    heading: { fontSize: 24, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
-    count: { fontSize: 16, marginBottom: 12, textAlign: 'center' },
-    card: {
-        padding: 12,
-        marginBottom: 12,
-        borderRadius: 8,
-        backgroundColor: '#f0f0f0',
+    topBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
     },
-    title: { fontSize: 18, fontWeight: '700' },
+    container: { flex: 1, backgroundColor: '#F2F5FA' },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    card: {
+        backgroundColor: '#FFFFFF',
+        marginHorizontal: 16,
+        marginBottom: 12,
+        borderRadius: 12,
+        padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#0061FF',
+    },
+    titleRow: { flexDirection: 'row', alignItems: 'center' },
+    cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF' },
+    distanceTitle: { fontSize: 14, color: '#666', marginLeft: 8 },
+    nearestSmallLine: { fontSize: 12, color: '#007AFF', fontWeight: '600', marginTop: 4 },
+    restricted: { marginTop: 6, color: '#E53935', fontWeight: '600' },
+    progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+    amountLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginRight: 8 },
+    progressBar: {
+        flex: 1,
+        height: 10,
+        backgroundColor: '#E5E5EA',
+        borderRadius: 5,
+        overflow: 'hidden',
+    },
+    progress: {
+        height: '100%',
+        backgroundColor: '#007AFF',
+    },
+    progressText: {
+        position: 'absolute',
+        alignSelf: 'center',
+        top: -2,
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
+    clearingText: {
+        marginTop: 8,
+        fontSize: 12,
+        color: '#E53935',
+        fontWeight: '600',
+    },
+    modalText: { fontSize: 16, lineHeight: 24, color: '#333' },
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-        backgroundColor: 'white',
-        padding: 20,
+        height: '75%',                  // ← open 75% of screen
+        backgroundColor: theme.surface,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        height: '75%', // Modal covers 3/4 of the screen
-    },
-    modalContentScroll: {
-        flexGrow: 1,
+        padding: 16,
     },
     closeButton: {
         position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: 'red',
-        borderRadius: 15,
-        padding: 10,
+        top: 12,
+        right: 12,
+        zIndex: 2,
+        color: theme.primary,
     },
-    closeButtonText: {
-        color: 'white',
+    closeX: {
         fontSize: 20,
-        fontWeight: 'bold',
+        color: theme.primary,
     },
-    image: {
+    modalScroll: {
+        paddingTop: 32,
+        paddingBottom: 24,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: theme.textPrimary,
+        marginBottom: 12,
+    },
+    imageScroll: {
+        marginBottom: 16,
+    },
+    modalImage: {
         width: 200,
         height: 200,
         borderRadius: 10,
-        marginVertical: 20,
+        marginRight: 10,
+        backgroundColor: '#ddd',
     },
-    text: {
+    detailsContainer: {
+        paddingHorizontal: 8,
+    },
+    detailLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: theme.textSecondary,
+        marginTop: 12,
+    },
+    detailText: {
         fontSize: 16,
-        marginVertical: 10,
+        color: theme.textPrimary,
+        marginTop: 4,
     },
-    details: {
-        fontSize: 18,
-        marginBottom: 20,
+    modalSlider: {
+        width: '100%',
+        height: 40,
+        marginTop: 8,
     },
+    sliderValue: {
+        fontSize: 14,
+        color: theme.primary,
+        textAlign: 'right',
+        marginBottom: 12,
+    },
+
 });

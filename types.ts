@@ -13,6 +13,7 @@ export default interface Buffet {
     locationcoordslong: number
     photofileID: string[]
     distance?: number
+    uri : string[]; // Add this line to store the image URL (uri)
 }
 
 export type UserLocation = {
