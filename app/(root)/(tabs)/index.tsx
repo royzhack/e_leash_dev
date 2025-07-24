@@ -14,14 +14,15 @@ import {
     Alert
 } from 'react-native';
 import * as Location from 'expo-location';
-import {checkUserRating, getBuffetRating, getLatestBuffets} from '@/lib/appwrite';
+import {checkUserRating, getBuffetRating, getLatestBuffets , getUserName , postRating} from '@/lib/appwrite';
 import { Buffet, UserLocation } from '../../../types';
 import calculateDistance from '@/app/actions/locationfunctions';
 import {Soup} from "lucide-react-native";
 import RatingForm from "@/app/components/RatingForm";
-import {postRating} from "@/app/actions/ratingsActions";
+//import {postRating} from "@/app/actions/ratingsActions";
 import {useGlobalContext} from "@/lib/global-provider";
 import {useFocusEffect} from '@react-navigation/native';
+
 
 export default function Index() {
     const userLocation = useUserLocation();
@@ -107,6 +108,8 @@ export default function Index() {
         return location;
     }
 
+
+
     const openModal = async (b: Buffet) => {
         setSelectedBuffet(b);
         setModalVisible(true);
@@ -136,23 +139,35 @@ export default function Index() {
         );
     }
 
+
     //ratingfunctions
-    async function handleRatingSubmit({rating, comment, buffetID}) {
-        const check = await checkUserRating(user?.$id, buffetID)
+    async function handleRatingSubmit({ rating, comment, buffetID }) {
+        try {
+            setLoading(true);
+            {/*} const check = await checkUserRating(user?.$id, buffetID)
         if (check.length > 0) {
             Alert.alert("Cannot post another rating", "You can only post one rating per buffet");
             return;
-        }
-        try {
-            setLoading(true);
-            await postRating(
-                rating,
-                comment,
-                buffetID,
-                user.$id
-            );
+        } */}
+
+            // Fetch the current user's username
+            const userName = await getUserName(user.$id);  // Assuming user.$id is available
+
+            // Construct the newRating object
+            const newRating = {
+                rating: rating,
+                comments: comment,
+                buffetID: buffetID,
+                userID: user.$id,   // Store the userID
+                userName: userName   // Store the userName
+            };
+
+            // Submit the rating and add the userName
+            await postRating(newRating);
+
             Alert.alert("Thank you!", 'Your rating has been posted successfully');
-            //refresh page nowww
+
+            // Refresh the buffet ratings after posting
             if (selectedBuffet) {
                 setRatingsLoading(true);
                 const results = await getBuffetRating(selectedBuffet.$id);
@@ -165,6 +180,7 @@ export default function Index() {
             setLoading(false);
         }
     }
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -275,31 +291,29 @@ export default function Index() {
                                         <Text style={styles.cardTitle}>
                                             {`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}
                                         </Text>
-                                        {selectedBuffet.distance != null && (
-                                            <Text style={styles.distanceTitle}>
-                                                | {(selectedBuffet.distance / 1000).toFixed(1)} km
-                                            </Text>
-                                        )}
+                                        {selectedBuffet.distance != null && (() => {
+                                            const now = new Date();
+                                            const createdAt = new Date(selectedBuffet.$createdAt);
+                                            const diffMins = Math.round((now - createdAt) / 60000);
+                                            return (
+                                                <Text style={styles.distanceTitle}>
+                                                    | {(selectedBuffet.distance < 1000
+                                                    ? `${selectedBuffet.distance} m`
+                                                    : `${(selectedBuffet.distance / 1000).toFixed(1)} km`)}
+                                                    {` | ${diffMins} min ago`}
+                                                </Text>
+                                            );
+                                        })()}
                                     </View>
 
-                                    <Text style={styles.nearestSmallLine}>
+                                    <Text style={[styles.nearestSmallLine, {marginTop: 0} ]}>
                                         {`*${selectedBuffet.locationdetails}`}
                                     </Text>
 
-                                    <Text style={styles.amountLabel}>
-                                        {`Buffet was posted at ${new Date(
-                                            selectedBuffet.$createdAt
-                                        ).toLocaleTimeString('en-SG', { timeStyle: 'short' })}`}
-                                    </Text>
 
-                                    <Text style={styles.amountLabel}>
-                                        {`Buffet clears by ${new Date(
-                                            selectedBuffet.clearedby
-                                        ).toLocaleTimeString('en-SG', { timeStyle: 'short' })}`}
-                                    </Text>
 
                                     <View style={styles.progressRow}>
-                                        <Text style={styles.amountLabel}>Amount left:</Text>
+                                        <Text style={[styles.amountLabel  ,{fontSize: 16}]}>Amount left:</Text>
                                         <View style={styles.progressBar}>
                                             <View
                                                 style={[
@@ -307,11 +321,26 @@ export default function Index() {
                                                     { width: `${selectedBuffet.leftover}%` },
                                                 ]}
                                             />
-                                            <Text style={styles.progressText}>
+                                            <Text style={[styles.progressText]}>
                                                 {selectedBuffet.leftover}%
                                             </Text>
                                         </View>
                                     </View>
+
+                                    <View style={styles.amountLabel}>
+                                        <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16}]}>Additional Details</Text>
+                                        <Text style={styles.distanceTitle}>
+                                            {selectedBuffet.additionaldetails
+                                                ? selectedBuffet.additionaldetails
+                                                : 'No additional details provided.'}
+                                        </Text>
+                                    </View>
+
+                                    <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16}]}>
+                                        {`Buffet clears by ${new Date(
+                                            selectedBuffet.clearedby
+                                        ).toLocaleTimeString('en-SG', { timeStyle: 'short' })}`}
+                                    </Text> {/* change to some red text later */}
 
                                     {/* Ratings section */}
                                     <View style={styles.ratingsSection}>
@@ -340,8 +369,11 @@ export default function Index() {
                                                     {item.comments ? (
                                                         <Text style={styles.ratingComment}>
                                                             {item.comments}
+                                                            {item.userName}
                                                         </Text>
                                                     ) : null}
+
+
                                                 </View>
                                             )}
                                         />)}
@@ -427,7 +459,7 @@ const styles = StyleSheet.create({
     titleRow: { flexDirection: 'row', alignItems: 'center' },
     cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF' },
     distanceTitle: { fontSize: 14, color: '#666', marginLeft: 8 },
-    nearestSmallLine: { fontSize: 12, color: '#007AFF', fontWeight: '600', marginTop: 4 },
+    nearestSmallLine: { fontSize: 14, color: '#007AFF', fontWeight: '600', marginTop: 4 },
     restricted: { marginTop: 6, color: '#E53935', fontWeight: '600' },
     progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
     amountLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginRight: 8 },

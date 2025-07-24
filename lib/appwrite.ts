@@ -3,7 +3,7 @@ import {
     Avatars,
     Account,
     Client,
-    OAuthProvider, Databases, Query, Storage, ID
+    OAuthProvider, Databases, Query, Storage, ID,
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
@@ -267,6 +267,32 @@ export async function checkUserRating(userID, buffetID) {
 
         return result.documents
     } catch(error) {
+        console.error(error);
+    }
+}
+
+// Get the current user's name
+export async function getUserName(userId) {
+    try {
+        const user = await account.get();  // This fetches the logged-in user
+        return user.name || user.email || 'Anonymous';
+    } catch (error) {
+        console.error("Error fetching user name:", error);
+        return 'Anonymous';
+    }
+}
+
+export async function postRating(newRating) {
+    try {
+        const response = await databases.createDocument(
+            config.databaseId!,
+            config.ratingscollectionID!,
+            ID.unique(),
+            newRating  // This now includes userName
+        );
+
+        return response;
+    } catch (error) {
         console.error(error);
     }
 }
