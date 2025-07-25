@@ -13,6 +13,7 @@ export default interface Buffet {
     locationcoordslong: number
     photofileID: string[]
     distance?: number
+    userName: string
 }
 
 export type Rating = {

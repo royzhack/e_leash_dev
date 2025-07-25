@@ -180,6 +180,9 @@ export default function Index() {
             setLoading(false);
         }
     }
+    const averageRating = buffetRatings.length
+        ? buffetRatings.reduce((acc, item) => acc + item.rating, 0) / buffetRatings.length
+        : 0;
 
 
     return (
@@ -222,12 +225,9 @@ export default function Index() {
                                 <Text style={styles.nearestSmallLine}>*Nearest buffet</Text>
                             )}
 
-                            {item.restricted && (
-                                <Text style={styles.restricted}>Restricted Access</Text>
-                            )}
 
                             <View style={styles.progressRow}>
-                                <Text style={styles.amountLabel}>Amount left:</Text>
+                                <Text style={styles.amountLabel}>Amount left :</Text>
                                 <View style={styles.progressBar}>
                                     <View
                                         style={[
@@ -238,6 +238,7 @@ export default function Index() {
                                     <Text style={styles.progressText}>{item.leftover}%</Text>
                                 </View>
                             </View>
+
 
                             {diffMins > 0 && diffMins < 20 && (
                                 <Text style={styles.clearingText}>
@@ -262,14 +263,13 @@ export default function Index() {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
+                        <Text style={[styles.modalTitle , {color: '#0061FF' } ]}>Buffet Details</Text>
                         <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                             <Text style={styles.closeX}>✕</Text>
                         </TouchableOpacity>
 
                         {selectedBuffet && (
                             <ScrollView contentContainerStyle={styles.modalScroll}>
-                                <Text style={styles.modalTitle}>Buffet Details</Text>
-
                                 <ScrollView
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
@@ -292,15 +292,11 @@ export default function Index() {
                                             {`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}
                                         </Text>
                                         {selectedBuffet.distance != null && (() => {
-                                            const now = new Date();
-                                            const createdAt = new Date(selectedBuffet.$createdAt);
-                                            const diffMins = Math.round((now - createdAt) / 60000);
                                             return (
                                                 <Text style={styles.distanceTitle}>
                                                     | {(selectedBuffet.distance < 1000
                                                     ? `${selectedBuffet.distance} m`
                                                     : `${(selectedBuffet.distance / 1000).toFixed(1)} km`)}
-                                                    {` | ${diffMins} min ago`}
                                                 </Text>
                                             );
                                         })()}
@@ -313,7 +309,7 @@ export default function Index() {
 
 
                                     <View style={styles.progressRow}>
-                                        <Text style={[styles.amountLabel  ,{fontSize: 16}]}>Amount left:</Text>
+                                        <Text style={[styles.amountLabel  ,{fontSize: 16}]}>Amount left :</Text>
                                         <View style={styles.progressBar}>
                                             <View
                                                 style={[
@@ -328,7 +324,7 @@ export default function Index() {
                                     </View>
 
                                     <View style={styles.amountLabel}>
-                                        <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16}]}>Additional Details</Text>
+                                        <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16}]}>Additional Details :</Text>
                                         <Text style={styles.distanceTitle}>
                                             {selectedBuffet.additionaldetails
                                                 ? selectedBuffet.additionaldetails
@@ -337,10 +333,27 @@ export default function Index() {
                                     </View>
 
                                     <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16}]}>
-                                        {`Buffet clears by ${new Date(
+                                        {`Cleared by :  ${new Date(
                                             selectedBuffet.clearedby
                                         ).toLocaleTimeString('en-SG', { timeStyle: 'short' })}`}
                                     </Text> {/* change to some red text later */}
+                                    <View style={styles.titleRow}>
+                                        <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16 , color: '#007AFF' , marginRight: 0 }]}>
+                                             {selectedBuffet.userName}
+                                        </Text>
+                                        {selectedBuffet && (() => {
+                                            const now = new Date();
+                                            const createdAt = new Date(selectedBuffet.$createdAt);
+                                            const diffMins = Math.round((now - createdAt) / 60000);
+                                            return (
+                                                <Text style={[styles.distanceTitle, {marginTop: 8} , {marginLeft: 3}]}>
+                                                    {`| ${diffMins} min ago`}
+                                                </Text>
+                                            );
+                                        })()}
+                                    </View>
+
+
 
                                     {/* Ratings section */}
                                     <View style={styles.ratingsSection}>
@@ -349,7 +362,12 @@ export default function Index() {
                                             onSubmit={handleRatingSubmit}
                                         />
 
-                                        <Text style={styles.sectionHeader}>Ratings</Text>
+
+                                        <Text style={styles.sectionHeader}>
+                                            {averageRating ? `Ratings: ${averageRating.toFixed(1
+                                            )} / 5` : 'No ratings yet'}
+                                        </Text>
+
                                         {selectedBuffet && (
                                         <FlatList
                                             data={buffetRatings}
@@ -361,21 +379,26 @@ export default function Index() {
                                                     No ratings yet. Be the first to rate!
                                                 </Text>
                                             )}
-                                            renderItem={({ item }) => (
-                                                <View style={styles.ratingItem}>
-                                                    <Text style={styles.ratingStars}>
-                                                        {'⭐'.repeat(item.rating)}
-                                                    </Text>
-                                                    {item.comments ? (
-                                                        <Text style={styles.ratingComment}>
-                                                            {item.comments}
-                                                            {item.userName}
-                                                        </Text>
-                                                    ) : null}
+                                            renderItem={({ item }) => {
+                                                const now = new Date();
+                                                const createdAt = new Date(item.$createdAt);
+                                                const diffMins2 = Math.round((now - createdAt) / 60000); // Time difference in minutes
 
+                                                return (
+                                                    <View style={styles.ratingItem}>
+                                                        <View style={styles.starsContainer}>
+                                                            <Text style={styles.userName}>{item.userName}</Text>
+                                                            <Text style={styles.ratingStars}>
+                                                                {'⭐'.repeat(item.rating)}
+                                                            </Text>
+                                                            <Text style={[styles.distanceTitle,{marginLeft: 3}] }>{`| ${diffMins2} min ago`}</Text>
+                                                        </View>
+                                                            <Text style={styles.ratingComment}>{item.comments}</Text>
 
-                                                </View>
-                                            )}
+                                                    </View>
+                                                );
+                                            }}
+
                                         />)}
                                     </View>
                                 </View>
@@ -421,6 +444,31 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 2,
     },
+    starsContainer: {
+        flexDirection: 'row',
+        marginBottom: 0,
+    },
+    ratingStars: {
+        fontSize: 20,
+        marginTop : 5
+
+    },
+    userName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 3,
+        marginRight : 3,
+    },
+    commentContainer: {
+        backgroundColor: '#f9f9f9',
+        padding: 8,
+        borderRadius: 6,
+        marginTop: 5,
+    },
+    ratingComment: {
+        fontSize: 14,
+        color: '#555'},
     title: {
         fontSize: 20,
         fontWeight: 'bold',
@@ -443,7 +491,7 @@ const styles = StyleSheet.create({
         marginVertical: 12,
     },
     ratingItem: {
-        paddingVertical: 8,
+        paddingVertical: 6,
         borderBottomWidth: 1,
         borderBottomColor: '#EEE',
     },
@@ -506,7 +554,8 @@ const styles = StyleSheet.create({
         top: 12,
         right: 12,
         zIndex: 2,
-        color: theme.primary,
+        color: '#0061FF',
+        marginTop : 5,
     },
     closeX: {
         fontSize: 20,
@@ -521,6 +570,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: theme.textPrimary,
         marginBottom: 12,
+        textAlign: 'center',
     },
     imageScroll: {
         marginBottom: 16,

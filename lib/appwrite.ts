@@ -120,7 +120,8 @@ export async function makeBuffet(newbuffet: Buffet) {
             userID: response.userID,
             locationcoordslat: response.locationcoordslat,
             locationcoordslong: response.locationcoordslong,
-            photofileID: response.photofileID
+            photofileID: response.photofileID ,
+            userName: response.userName,
 
             // nuslocation: response.nuslocation // Only if in your schema/interface
         };
@@ -153,6 +154,20 @@ export async function getUsersBuffets(userID) {
         const result = await databases.listDocuments(
             config.databaseId!,
             config.buffetcollectionID!,
+            [Query.equal('userID', userID)]
+        );
+        return result.documents;
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
+export async function getUsersDeletedBuffets(userID) {
+    try {
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.deletedBuffetcollectionID!,
             [Query.equal('userID', userID)]
         );
         return result.documents;

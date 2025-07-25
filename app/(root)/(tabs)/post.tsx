@@ -28,7 +28,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useNavigation } from '@react-navigation/native';       // ADDED: navigation hook
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
-import {uploadfile} from "@/lib/appwrite";
+import {getUserName, uploadfile} from "@/lib/appwrite";
 
 
 
@@ -67,7 +67,7 @@ function timecheck(value, timediffMins: number): boolean {
 }
 
 
-export default function Post(props: Props) {
+export default  function Post(props: Props) {
     const navigation = useNavigation();                     // ADDED: get navigation instance
     const user = useGlobalContext().user;
     const { control, handleSubmit, formState: { errors, isSubmitSuccessful }, reset } = useForm({
@@ -129,8 +129,10 @@ export default function Post(props: Props) {
                 user?.$id,
                 coords,
                 placeName,
-                photofileID
+                photofileID,
+                user?.name,
             );
+
             Alert.alert('Success', 'Buffet posted successfully.');
             navigation.navigate('index');
             // ADDED: go to Home screen

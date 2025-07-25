@@ -22,7 +22,7 @@ import {
     LogOut,
     UserCircle2, Soup,
 } from 'lucide-react-native';
-import { getUsersBuffets, logout, updateBuffet, deleteBuffet } from '@/lib/appwrite';
+import { getUsersBuffets, getUsersDeletedBuffets, logout, updateBuffet, deleteBuffet } from '@/lib/appwrite';
 import { useGlobalContext } from '@/lib/global-provider';;
 import { Buffet } from '../../../types';
 import {useRouter} from "expo-router";
@@ -36,8 +36,10 @@ export default function Profile() {
 
     const [loading, setLoading] = useState(false);
     const [usersBuffets, setUsersBuffets] = useState<Buffet[]>([]);
+    const [usersDeletedBuffets, setUsersDeletedBuffets] = useState<Buffet[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [activeBuffetVisible, setActiveBuffetVisible] = useState(false);
+    const [deletedBuffetVisible, setDeletedBuffetVisible] = useState(false);
     const [expandedBuffet, setExpandedBuffet] = useState<string | null>(null);
     const [sliderValue, setSliderValue] = useState(0);
 
@@ -55,17 +57,37 @@ export default function Profile() {
         }
     }, [userID]);
 
+    const fetchMyDeletedBuffets = useCallback(async () => {
+        if (!userID) return;
+        setLoading(true);
+        try {
+            const docs = await getUsersDeletedBuffets(userID);
+            setUsersDeletedBuffets(docs);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, [userID]);
+
+
     // Run once on mount
     useEffect(() => {
         fetchMyBuffets();
-    }, [fetchMyBuffets]);
+        fetchMyDeletedBuffets();
+    }, [fetchMyBuffets, fetchMyDeletedBuffets]);
+
+
+
 
     // Also run on screen focus
     useFocusEffect(
         useCallback(() => {
             fetchMyBuffets();
-        }, [fetchMyBuffets])
+            fetchMyDeletedBuffets();
+        }, [fetchMyBuffets, fetchMyDeletedBuffets])
     );
+
 
     // Pull to refresh
     const onRefresh = useCallback(async () => {
@@ -74,6 +96,7 @@ export default function Profile() {
         setRefreshing(false);
     }, [fetchMyBuffets]);
 
+    // Logout
     const handleLogout = async () => {
         const ok = await logout();
         if (ok) {
@@ -130,6 +153,7 @@ export default function Profile() {
                 {/* Past Buffets placeholder */}
                 <TouchableOpacity
                     style={[styles.card, styles.cardRow]}
+                    onPress={() => setDeletedBuffetVisible(true)}
                 >
                     <View style={styles.titleRow}>
                         <UtensilsCrossed size={20} color={theme.primary} />
@@ -196,7 +220,7 @@ export default function Profile() {
                                                         ))}
                                                     </ScrollView>
 
-                                                    <View style={styles.titleRow}>
+                                            <View style={styles.titleRow}>
                                                 <Text style={styles.modalcardTitle}>{item.locationname}</Text>
                                             </View>
                                             <Text style={styles.nearestSmallLine}>
@@ -280,6 +304,45 @@ export default function Profile() {
                                     </View>
                                 );
                             }}
+                        />
+                    </View>
+                </View>
+            </Modal>
+            <Modal
+                visible={deletedBuffetVisible}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setDeletedBuffetVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setDeletedBuffetVisible(false)}
+                        >
+                            <Text style={styles.closeX}>✕</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Your Past Buffets</Text>
+                        {/* Deleted Buffets List */}
+                        <FlatList
+                            data={usersDeletedBuffets}
+                            keyExtractor={b => b.$id}
+                            contentContainerStyle={{ paddingVertical: 12 }}
+                            renderItem={({ item }) => (
+                                <View style={styles.card}>
+                                    {/* Buffet Info */}
+                                    <Text style={styles.modalcardTitle}>{item.locationname}</Text>
+                                    <Text style={styles.nearestSmallLine}>
+                                        {`*${item.locationdetails}`}
+                                    </Text>
+                                    {/* Additional buffet details */}
+                                    <Text style={styles.amountLabel}>
+                                        {`Buffet was posted at ${new Date(item.$createdAt).toLocaleString('en-SG', {
+                                            timeStyle: 'short',
+                                        })}`}
+                                    </Text>
+                                </View>
+                            )}
                         />
                     </View>
                 </View>

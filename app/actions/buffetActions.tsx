@@ -4,14 +4,29 @@ import * as FileSystem from 'expo-file-system';
 import {Buffet} from '../../types'
 
 // @ts-ignore
-export async function postBuffet(level: number, locationdetails:string,  clearedby: Date, leftover: number,
-                                 additionaldetails: string, userID: string, locationcoords: number[], locationname: string,
-                                 photofileID: string[]): Promise<Buffet> {
+export async function postBuffet(level: number,
+                                 locationdetails:string,
+                                 clearedby: Date,
+                                 leftover: number,
+                                 additionaldetails: string,
+                                 userID: string,
+                                 locationcoords: number[],
+                                 locationname: string,
+                                 photofileID: string[] ,
+                                 userName: string): Promise<Buffet> {
 
-    const newBuffet = {level: level, locationdetails: locationdetails, clearedby: clearedby.toISOString(),
-                            leftover: leftover, additionaldetails: additionaldetails, locationname: locationname,
-                            userID: userID, locationcoordslat: locationcoords[0], locationcoordslong: locationcoords[1],
-                        photofileID: photofileID};
+    const newBuffet = {
+        level: level,
+        locationdetails: locationdetails,
+        clearedby: clearedby.toISOString(),
+        leftover: leftover,
+        additionaldetails: additionaldetails,
+        locationname: locationname,
+        userID: userID,
+        locationcoordslat: locationcoords[0],
+        locationcoordslong: locationcoords[1],
+        photofileID: photofileID,
+        userName : userName };
 
     return makeBuffet(newBuffet);
 }
