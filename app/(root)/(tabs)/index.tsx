@@ -346,7 +346,7 @@ export default function Index() {
                                             const createdAt = new Date(selectedBuffet.$createdAt);
                                             const diffMins = Math.round((now - createdAt) / 60000);
                                             return (
-                                                <Text style={[styles.distanceTitle, {marginTop: 8} , {marginLeft: 3}]}>
+                                                <Text style={[styles.distanceTitle, {marginTop: 8} , {marginLeft: 3} ]}>
                                                     {`| ${diffMins} min ago`}
                                                 </Text>
                                             );

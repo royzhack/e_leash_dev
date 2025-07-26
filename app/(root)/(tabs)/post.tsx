@@ -252,7 +252,14 @@ export default  function Post(props: Props) {
                                 <TouchableOpacity style={styles.selector} onPress={() => setShowTimePicker(true)}>
                                     <Text style={styles.selectorText}>{value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                                 </TouchableOpacity>
-                                {showTimePicker && <DateTimePicker value={value} mode="time" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, date) => { setShowTimePicker(false); date && onChange(date); }} />}
+                                {showTimePicker && <DateTimePicker
+                                    value={value}
+                                    mode="time"
+                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                    textColor={theme.primary}
+                                    onChange={(_, date) =>
+                                    { setShowTimePicker(false); date && onChange(date); }} />}
+
                             </>
                         )}
                     />
@@ -394,10 +401,10 @@ const styles = StyleSheet.create({
         padding: 10,
         backgroundColor: theme.surface,
         margin: 12,
-        color: theme.surface,
+        color: theme.primary,
     },
     selectorText: {
-        color: theme.textPrimary,
+        color: theme.primary,
     },
     sliderContainer: {
         flexDirection: 'row',
@@ -419,6 +426,6 @@ const styles = StyleSheet.create({
         textAlignVertical: 'top',
         backgroundColor: theme.surface,
         margin: 12,
-        color: theme.surface,
+        color: theme.textPrimary,
     },
 });
