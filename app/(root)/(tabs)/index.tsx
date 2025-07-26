@@ -13,6 +13,7 @@ import {
     RefreshControl,
     Alert
 } from 'react-native';
+import halal from '@/constants/images'
 import * as Location from 'expo-location';
 import {checkUserRating, getBuffetRating, getLatestBuffets , getUserName , postRating} from '@/lib/appwrite';
 import { Buffet, UserLocation } from '../../../types';
@@ -214,12 +215,15 @@ export default function Index() {
                         >
                             <View style={styles.titleRow}>
                                 <Text style={styles.cardTitle}>{item.locationname}</Text>
+
                                 {item.distance != null && (
                                     <Text style={styles.distanceTitle}>
                                         | {(item.distance / 1000).toFixed(1)} km
                                     </Text>
                                 )}
                             </View>
+
+
 
                             {index === 0 && (
                                 <Text style={styles.nearestSmallLine}>*Nearest buffet</Text>
@@ -240,16 +244,42 @@ export default function Index() {
                             </View>
 
 
-                            {diffMins > 0 && diffMins < 20 && (
-                                <Text style={styles.clearingText}>
-                                    *Clearing in {diffMins} min
-                                </Text>
-                            )}
-                            {diffMins <= 0 && (
-                                <Text style={styles.clearingText}>
-                                    *Cleared {Math.abs(diffMins)} min ago
-                                </Text>
-                            )}
+                            <View style={styles.container2}>
+                                {/* Display clearing text based on diffMins */}
+                                {diffMins > 20 && (
+                                    <Text style={[styles.clearingText, { color: theme.primary }]}>
+                                        *Clearing in {diffMins} min
+                                    </Text>
+                                )}
+                                {(diffMins > 0 && diffMins <= 20) && (
+                                    <Text style={[styles.clearingText, { color: '#E53935' }]}>
+                                        *Clearing in {diffMins} min
+                                    </Text>
+                                )}
+                                {diffMins <= 0 && (
+                                    <Text style={styles.clearingText}>
+                                        *Cleared {Math.abs(diffMins)} min ago
+                                    </Text>
+                                )}
+
+                                {/* Leaf Emoji positioned at bottom right if item.isVeg is true */}
+                                {item.isVeg && (
+                                    <Text style={styles.leafEmoji}>🥬</Text>
+                                )}
+                                {item.isHalal && (
+                                    <Image
+                                        source= {require('../../../assets/images/Halal.png')} // Path to the local image file
+                                        style={styles.halalImage}
+                                    />
+                                )}
+                                {!item.isBeef && (
+                                    <Image
+                                        source= {require('../../../assets/images/nobeef.jpg')} // Path to the local image file
+                                        style={[styles.halalImage , {right: 55}]}
+                                    />
+                                )}
+
+                            </View>
                         </TouchableOpacity>
                     );
                 }}
@@ -323,12 +353,27 @@ export default function Index() {
                                         </View>
                                     </View>
 
+
+
                                     <View style={styles.amountLabel}>
                                         <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16}]}>Additional Details :</Text>
                                         <Text style={styles.distanceTitle}>
                                             {selectedBuffet.additionaldetails
                                                 ? selectedBuffet.additionaldetails
                                                 : 'No additional details provided.'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.amountLabel}>
+                                        <Text style={[styles.amountLabel, { marginTop: 10, fontSize: 16 }]}>Dietary Restrictions :</Text>
+
+                                        <Text style={styles.distanceTitle}>
+                                            {
+                                                // Construct the message based on the conditions for Veg, Beef, and Halal options
+                                                `${selectedBuffet.isVeg ? 'Veg options available' : ''}`
+                                                + `${selectedBuffet.isBeef === false ? ', No beef' : ''}`
+                                                + `${selectedBuffet.isHalal ? ', Halal' : ''}`
+                                                || 'No additional details provided.'
+                                            }
                                         </Text>
                                     </View>
 
@@ -424,6 +469,13 @@ export default function Index() {
     refreshTint: '#007AFF'        // pull-to-refresh indicator
 };
 const styles = StyleSheet.create({
+    leafEmoji: {
+        fontSize: 14, // Size of the emoji
+        position: 'absolute', // Position it at the top right
+        right: 0, // Align to the right
+        top: 0, // Align to the top
+        paddingTop: 4, // Add some space from the right edge if needed
+    },
     topBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -431,6 +483,16 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     container: { flex: 1, backgroundColor: '#F2F5FA' },
+    container2: {
+        flex: 1,
+        position: 'relative', // Ensure that the leaf emoji can be positioned absolutely inside the container
+    },
+    halalImage: {
+        position: 'absolute', // Positioning the image absolutely inside the container
+        bottom: 1, // Position the image near the bottom
+        right: 27, // Position the image near the left
+        width: 20, // Adjust size of the image
+        height: 20, },// Adjust size of the image
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     card: {
         backgroundColor: '#FFFFFF',
@@ -504,7 +566,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: theme.textPrimary,
     },
-    titleRow: { flexDirection: 'row', alignItems: 'center' },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        position: 'relative', // To allow absolute positioning inside this container
+    },
+
     cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF' },
     distanceTitle: { fontSize: 14, color: '#666', marginLeft: 8 },
     nearestSmallLine: { fontSize: 14, color: '#007AFF', fontWeight: '600', marginTop: 4 },

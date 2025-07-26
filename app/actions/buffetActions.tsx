@@ -13,7 +13,10 @@ export async function postBuffet(level: number,
                                  locationcoords: number[],
                                  locationname: string,
                                  photofileID: string[] ,
-                                 userName: string): Promise<Buffet> {
+                                 userName: string,
+                                 isHalal: boolean,
+                                 isVeg: boolean,
+                                 isBeef: boolean): Promise<Buffet> {
 
     const newBuffet = {
         level: level,
@@ -26,7 +29,10 @@ export async function postBuffet(level: number,
         locationcoordslat: locationcoords[0],
         locationcoordslong: locationcoords[1],
         photofileID: photofileID,
-        userName : userName };
+        userName : userName ,
+        isHalal: isHalal,
+        isVeg: isVeg,
+        isBeef: isBeef };
 
     return makeBuffet(newBuffet);
 }

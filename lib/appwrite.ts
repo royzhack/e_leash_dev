@@ -122,6 +122,9 @@ export async function makeBuffet(newbuffet: Buffet) {
             locationcoordslong: response.locationcoordslong,
             photofileID: response.photofileID ,
             userName: response.userName,
+            isHalal: response.isHalal,
+            isVeg: response.isVeg,
+            isBeef: response.isBeef,
 
             // nuslocation: response.nuslocation // Only if in your schema/interface
         };
