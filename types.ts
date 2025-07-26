@@ -1,7 +1,7 @@
 
 export default interface Buffet {
-    $id: string
-    $createdAt: string
+    $id?: string
+    $createdAt?: string
     clearedby: Date
     leftover: number
     additionaldetails: string
@@ -13,6 +13,17 @@ export default interface Buffet {
     locationcoordslong: number
     photofileID: string[]
     distance?: number
+    userName: string
+    rating?: number
+}
+
+export type Rating = {
+    $id?: string
+    $createdAt?: string
+    rating: number
+    comments?: string
+    buffetID: string
+    userID: string
 }
 
 export type UserLocation = {

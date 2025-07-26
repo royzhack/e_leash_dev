@@ -1,17 +1,38 @@
-import {makeBuffet} from '@/lib/appwrite'
+import {getBuffetRating, makeBuffet} from '@/lib/appwrite'
 import {ID} from "react-native-appwrite";
 import * as FileSystem from 'expo-file-system';
 import {Buffet} from '../../types'
 
 // @ts-ignore
-export async function postBuffet(level: number, locationdetails:string,  clearedby: Date, leftover: number,
-                                 additionaldetails: string, userID: string, locationcoords: number[], locationname: string,
-                                 photofileID: string[]): Promise<Buffet> {
+export async function postBuffet(level: number,
+                                 locationdetails:string,
+                                 clearedby: Date,
+                                 leftover: number,
+                                 additionaldetails: string,
+                                 userID: string,
+                                 locationcoords: number[],
+                                 locationname: string,
+                                 photofileID: string[] ,
+                                 userName: string,
+                                 isHalal: boolean,
+                                 isVeg: boolean,
+                                 isBeef: boolean): Promise<Buffet> {
 
-    const newBuffet = {level: level, locationdetails: locationdetails, clearedby: clearedby.toISOString(),
-                            leftover: leftover, additionaldetails: additionaldetails, locationname: locationname,
-                            userID: userID, locationcoordslat: locationcoords[0], locationcoordslong: locationcoords[1],
-                        photofileID: photofileID};
+    const newBuffet = {
+        level: level,
+        locationdetails: locationdetails,
+        clearedby: clearedby.toISOString(),
+        leftover: leftover,
+        additionaldetails: additionaldetails,
+        locationname: locationname,
+        userID: userID,
+        locationcoordslat: locationcoords[0],
+        locationcoordslong: locationcoords[1],
+        photofileID: photofileID,
+        userName : userName ,
+        isHalal: isHalal,
+        isVeg: isVeg,
+        isBeef: isBeef };
 
     return makeBuffet(newBuffet);
 }
@@ -54,3 +75,15 @@ export async function supplementPhoto(photo) {
     return photo;
 }
 
+export async function getBuffetaverageRating(buffetID) {
+    try {
+        const buffetRatings = await getBuffetRating(buffetID);
+        const averageRating = buffetRatings.length
+            ? buffetRatings.reduce((acc, item) => acc + item.rating, 0) / buffetRatings.length
+            : 0;
+        console.log(averageRating);
+        return averageRating;
+    } catch (error) {
+        console.error(error);
+    }
+}
