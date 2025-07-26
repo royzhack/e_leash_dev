@@ -143,6 +143,9 @@ export default  function Post(props: Props) {
                 placeName,
                 photofileID,
                 user?.name,
+                data.isHalal,
+                data.isVeg,
+                data.isBeef,
             );
             isSubmitting(false);
 
@@ -294,6 +297,101 @@ export default  function Post(props: Props) {
                     />
                 </View>
 
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Dietary Restrictions</Text>
+
+                    {/* Halal Option */}
+                    <View style={styles.optionSection}>
+                        <Text style={styles.optionTitle}>Halal : </Text>
+                        <Controller
+                            control={control}
+                            name="isHalal"
+                            render={({ field: { onChange, value } }) => (
+                                <View style={styles.optionContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === true && styles.selectedButton, // Apply selectedButton style for 'Yes'
+                                        ]}
+                                        onPress={() => onChange(true)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === true && styles.selectedButtonText]}>Yes</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === false && styles.selectedButton, // Apply selectedButton style for 'No'
+                                        ]}
+                                        onPress={() => onChange(false)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === false && styles.selectedButtonText]}>No</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        />
+                    </View>
+                    {/* Veg Option */}
+                    <View style={styles.optionSection}>
+                        <Text style={styles.optionTitle}> Vegetarian : </Text>
+                        <Controller
+                            control={control}
+                            name="isVeg"
+                            render={({ field: { onChange, value } }) => (
+                                <View style={styles.optionContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === true && styles.selectedButton, // Apply selectedButton style for 'Yes'
+                                        ]}
+                                        onPress={() => onChange(true)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === true && styles.selectedButtonText]}>Yes</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === false && styles.selectedButton, // Apply selectedButton style for 'No'
+                                        ]}
+                                        onPress={() => onChange(false)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === false && styles.selectedButtonText]}>No</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        />
+                    </View>
+                    <View style={styles.optionSection}>
+                        <Text style={styles.optionTitle}> Contains Beef: </Text>
+                        <Controller
+                            control={control}
+                            name="isBeef"
+                            render={({ field: { onChange, value } }) => (
+                                <View style={styles.optionContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === true && styles.selectedButton, // Apply selectedButton style for 'Yes'
+                                        ]}
+                                        onPress={() => onChange(true)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === true && styles.selectedButtonText]}>Yes</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === false && styles.selectedButton, // Apply selectedButton style for 'No'
+                                        ]}
+                                        onPress={() => onChange(false)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === false && styles.selectedButtonText]}>No</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        />
+                    </View>
+
+                </View>
+
                 {/* Additional Details */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionHeaderText}>Additional Details</Text>
@@ -441,5 +539,43 @@ const styles = StyleSheet.create({
         margin: 12,
         color: theme.textPrimary,
     },
+
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+    optionSection: {
+        flexDirection: 'row', // Aligns the text and buttons horizontally
+        alignItems: 'center', // Centers the content vertically within the container
+        marginTop: 4,
+        marginLeft : 4,
+    },
+    optionTitle: {
+        fontSize: 16,
+        marginBottom: 8,
+    },
+    optionContainer: {
+        flexDirection: 'row',
+        marginBottom: 12,
+    },
+    optionButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderRadius: 20,
+        marginRight: 10,
+        borderColor: theme.primary,
+        backgroundColor: 'transparent',
+    },
+    selectedButton: {
+        backgroundColor: theme.primary,
+        color: theme.surface,
+
+    },
+    selectedButtonText: {
+        fontSize: 16,
+        color: theme.surface,
+    },
+    optionButtonText: {
+        fontSize: 16,
+        color: '#0061FF',
+    },
 });
