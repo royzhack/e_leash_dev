@@ -11,7 +11,7 @@ import {
     Image,
     StyleSheet,
     Alert,
-    Platform
+    Platform, ActivityIndicator
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Soup } from 'lucide-react-native';
@@ -80,6 +80,9 @@ export default  function Post(props: Props) {
         }
     });
 
+    //loading
+    const [submitting, isSubmitting] = useState(false);
+
     // Photo state
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [photos, setPhotos] = useState([]);
@@ -94,6 +97,14 @@ export default  function Post(props: Props) {
             reset(); setPhotos([]); setShowTimePicker(false); setIsCameraOpen(false);
         }
     }, [isSubmitSuccessful, reset]);
+
+    if (submitting) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color="#007AFF" />
+            </View>
+        );
+    }
 
     const onSubmit = async data => {
         if (!data.location) { Alert.alert('Validation', 'Please select a location'); return; }
@@ -119,6 +130,7 @@ export default  function Post(props: Props) {
         }
 
         try {
+            isSubmitting(true);
             await postPhoto(photos);
             await postBuffet(
                 data.level,
@@ -132,6 +144,7 @@ export default  function Post(props: Props) {
                 photofileID,
                 user?.name,
             );
+            isSubmitting(false);
 
             Alert.alert('Success', 'Buffet posted successfully.');
             navigation.navigate('index');
@@ -428,4 +441,5 @@ const styles = StyleSheet.create({
         margin: 12,
         color: theme.textPrimary,
     },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

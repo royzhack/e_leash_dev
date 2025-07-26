@@ -1,4 +1,4 @@
-import {makeBuffet} from '@/lib/appwrite'
+import {getBuffetRating, makeBuffet} from '@/lib/appwrite'
 import {ID} from "react-native-appwrite";
 import * as FileSystem from 'expo-file-system';
 import {Buffet} from '../../types'
@@ -69,3 +69,15 @@ export async function supplementPhoto(photo) {
     return photo;
 }
 
+export async function getBuffetaverageRating(buffetID) {
+    try {
+        const buffetRatings = await getBuffetRating(buffetID);
+        const averageRating = buffetRatings.length
+            ? buffetRatings.reduce((acc, item) => acc + item.rating, 0) / buffetRatings.length
+            : 0;
+        console.log(averageRating);
+        return averageRating;
+    } catch (error) {
+        console.error(error);
+    }
+}

@@ -14,6 +14,7 @@ export default interface Buffet {
     photofileID: string[]
     distance?: number
     userName: string
+    rating?: number
 }
 
 export type Rating = {
