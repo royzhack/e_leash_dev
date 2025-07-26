@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     amountLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginRight: 8 },
     progressBar: {
         flex: 1,
-        height: 10,
+        height: 17,
         backgroundColor: '#E5E5EA',
         borderRadius: 5,
         overflow: 'hidden',
@@ -481,10 +481,10 @@ const styles = StyleSheet.create({
     progressText: {
         position: 'absolute',
         alignSelf: 'center',
-        top: -2,
+        top: 0,
         fontSize: 12,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: '#000',
     },
     titleRow: { flexDirection: 'row', alignItems: 'center' },
     cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF', flex: 1, paddingLeft: 8 },
