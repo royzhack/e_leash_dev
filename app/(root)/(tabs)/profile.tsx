@@ -22,12 +22,21 @@ import {
     LogOut,
     UserCircle2, Soup,
 } from 'lucide-react-native';
-import { getUsersBuffets, getUsersDeletedBuffets, logout, updateBuffet, deleteBuffet } from '@/lib/appwrite';
+import {
+    getUsersBuffets,
+    getUsersDeletedBuffets,
+    logout,
+    updateBuffet,
+    deleteBuffet,
+    getBuffetRating
+} from '@/lib/appwrite';
 import { useGlobalContext } from '@/lib/global-provider';;
 import { Buffet } from '../../../types';
 import {useRouter} from "expo-router";
 import {useFocusEffect} from "@react-navigation/native";
 import Slider from "@react-native-community/slider";
+import {getBuffetaverageRating} from "@/app/actions/buffetActions";
+import { Star, StarOff } from 'lucide-react-native';
 
 export default function Profile() {
     const { user, refetch } = useGlobalContext();
@@ -37,11 +46,14 @@ export default function Profile() {
     const [loading, setLoading] = useState(false);
     const [usersBuffets, setUsersBuffets] = useState<Buffet[]>([]);
     const [usersDeletedBuffets, setUsersDeletedBuffets] = useState<Buffet[]>([]);
+    const [userBuffetwithRatings, setUserBuffetwithRatings] = useState<Buffet[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [activeBuffetVisible, setActiveBuffetVisible] = useState(false);
     const [deletedBuffetVisible, setDeletedBuffetVisible] = useState(false);
     const [expandedBuffet, setExpandedBuffet] = useState<string | null>(null);
     const [sliderValue, setSliderValue] = useState(0);
+
+
 
     // Fetch logic
     const fetchMyBuffets = useCallback(async () => {
@@ -50,6 +62,15 @@ export default function Profile() {
         try {
             const docs = await getUsersBuffets(userID);
             setUsersBuffets(docs);
+            console.log("docs", docs);
+            //next, add average ratings to the buffets
+            const ratedBuffets = await Promise.all(docs.map(async x => {
+                const ratings = await getBuffetaverageRating(x.$id);
+                return {...x, rating: ratings};
+            }
+            ));
+            console.log("rated", ratedBuffets);
+            setUserBuffetwithRatings(ratedBuffets);
         } catch (err) {
             console.error(err);
         } finally {
@@ -76,7 +97,6 @@ export default function Profile() {
         fetchMyBuffets();
         fetchMyDeletedBuffets();
     }, [fetchMyBuffets, fetchMyDeletedBuffets]);
-
 
 
 
@@ -190,7 +210,7 @@ export default function Profile() {
                         <Text style={styles.modalTitle}>Your Active Buffets</Text>
 
                         <FlatList
-                            data={usersBuffets}
+                            data={userBuffetwithRatings}
                             keyExtractor={b => b.$id}
                             contentContainerStyle={{ paddingVertical: 12 }}
                             renderItem={({ item }) => {
@@ -222,10 +242,16 @@ export default function Profile() {
 
                                             <View style={styles.titleRow}>
                                                 <Text style={styles.modalcardTitle}>{item.locationname}</Text>
+                                                <View style={styles.ratingWrapper}>
+                                                    <Text style={styles.ratingText}>{typeof item.rating === "number" ? item.rating.toFixed(1) : "N/A"}</Text>
+                                                    <Star size={18} color="#FFD700" style={styles.ratingStar} />
+                                                </View>
                                             </View>
+
                                             <Text style={styles.nearestSmallLine}>
                                                 {`*${item.locationdetails}`}
                                             </Text>
+
 
                                             <Text style={styles.amountLabel}>
                                                 {`Buffet was posted at ${new Date(item.$createdAt).toLocaleString('en-SG', {
@@ -278,13 +304,15 @@ export default function Profile() {
                                                     </View>
 
                                                     <TouchableOpacity
-                                                        onPress={() =>
+                                                        onPress={() => {
                                                             router.push({
-                                                                pathname: '/actions/editBuffet',
+                                                                pathname: '/components/editBuffet',
                                                                 params: {
                                                                     buffet: JSON.stringify(item),
                                                                 },
-                                                            })
+                                                            });
+                                                            setActiveBuffetVisible(false);
+                                                        }
                                                         }
                                                     >
                                                         <Text style={styles.detailText}>
@@ -441,7 +469,7 @@ const styles = StyleSheet.create({
     amountLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginRight: 8 },
     progressBar: {
         flex: 1,
-        height: 10,
+        height: 17,
         backgroundColor: '#E5E5EA',
         borderRadius: 5,
         overflow: 'hidden',
@@ -453,10 +481,10 @@ const styles = StyleSheet.create({
     progressText: {
         position: 'absolute',
         alignSelf: 'center',
-        top: -2,
+        top: 0,
         fontSize: 12,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: '#000',
     },
     titleRow: { flexDirection: 'row', alignItems: 'center' },
     cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF', flex: 1, paddingLeft: 8 },
@@ -509,4 +537,22 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         textAlign: 'center',
     },
+    rating: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
+    ratingWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 8,
+    },
+    ratingStar: {
+        marginRight: 4,
+    },
+    ratingText: {
+        fontSize: 16,
+        color: '#212529',
+        fontWeight: '600',
+    },
+
 });

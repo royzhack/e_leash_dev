@@ -23,6 +23,7 @@ import RatingForm from "@/app/components/RatingForm";
 //import {postRating} from "@/app/actions/ratingsActions";
 import {useGlobalContext} from "@/lib/global-provider";
 import {useFocusEffect} from '@react-navigation/native';
+import {red} from "react-native-reanimated/lib/typescript/Colors";
 
 
 export default function Index() {
@@ -181,9 +182,11 @@ export default function Index() {
             setLoading(false);
         }
     }
+
     const averageRating = buffetRatings.length
         ? buffetRatings.reduce((acc, item) => acc + item.rating, 0) / buffetRatings.length
         : 0;
+
 
 
     return (
@@ -244,6 +247,7 @@ export default function Index() {
                             </View>
 
 
+
                             <View style={styles.container2}>
                                 {/* Display clearing text based on diffMins */}
                                 {diffMins > 20 && (
@@ -280,6 +284,7 @@ export default function Index() {
                                 )}
 
                             </View>
+
                         </TouchableOpacity>
                     );
                 }}
@@ -580,7 +585,7 @@ const styles = StyleSheet.create({
     amountLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginRight: 8 },
     progressBar: {
         flex: 1,
-        height: 10,
+        height: 17,
         backgroundColor: '#E5E5EA',
         borderRadius: 5,
         overflow: 'hidden',
@@ -592,10 +597,10 @@ const styles = StyleSheet.create({
     progressText: {
         position: 'absolute',
         alignSelf: 'center',
-        top: -2,
+        top: 0,
         fontSize: 12,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: '#000',
     },
     clearingText: {
         marginTop: 8,
