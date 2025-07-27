@@ -24,7 +24,7 @@
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.naasiuuuuff.NUS_Wasteless",
+      "package": "com.roy.nuswasteless",
       "intentFilters": [
         {
           "action": "VIEW",
