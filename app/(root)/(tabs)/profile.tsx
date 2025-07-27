@@ -37,6 +37,7 @@ import {useFocusEffect} from "@react-navigation/native";
 import Slider from "@react-native-community/slider";
 import {getBuffetaverageRating} from "@/app/actions/buffetActions";
 import { Star, StarOff } from 'lucide-react-native';
+import levelfix from "@/app/actions/levelfix";
 
 export default function Profile() {
     const { user, refetch } = useGlobalContext();
@@ -69,7 +70,6 @@ export default function Profile() {
                 return {...x, rating: ratings};
             }
             ));
-            console.log("rated", ratedBuffets);
             setUserBuffetwithRatings(ratedBuffets);
         } catch (err) {
             console.error(err);
@@ -241,7 +241,7 @@ export default function Profile() {
                                                     </ScrollView>
 
                                             <View style={styles.titleRow}>
-                                                <Text style={styles.modalcardTitle}>{item.locationname}</Text>
+                                                <Text style={styles.modalcardTitle}>{item.locationname} Level {levelfix(item.level)}</Text>
                                                 <View style={styles.ratingWrapper}>
                                                     <Text style={styles.ratingText}>{typeof item.rating === "number" ? item.rating.toFixed(1) : "N/A"}</Text>
                                                     <Star size={18} color="#FFD700" style={styles.ratingStar} />
