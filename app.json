@@ -9,14 +9,31 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eleashdev.nuswasteless",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.naasiuuuuff.NUS_Wasteless",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": {
+            "scheme": "appwrite-callback-6837256a001912254094"
+          }
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -53,10 +70,32 @@
           "photosPermission": "Photos of the buffet/food will be shown to others in NUS."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "manifestPlaceholders": {
+              "appwriteProject": "6837256a001912254094"
+            }
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4253adc2-1bf8-4a5b-b43a-0e85821f4f83"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4253adc2-1bf8-4a5b-b43a-0e85821f4f83"
     }
   }
 }
