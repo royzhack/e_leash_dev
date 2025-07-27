@@ -109,6 +109,7 @@ export default  function Post(props: Props) {
     const onSubmit = async data => {
         if (!data.location) { Alert.alert('Validation', 'Please select a location'); return; }
         if (photos.length === 0) { Alert.alert('Validation', 'Please take at least one photo'); return; }
+        if (!data.isBeef || !data.isHalal || !data.isVeg) {Alert.alert('Validation', 'Please input the dietary restrictions'); return; }
 
         // Lookup coords & name
         const feature = locationfind(data.location);
@@ -305,6 +306,7 @@ export default  function Post(props: Props) {
                         <Text style={styles.optionTitle}>Halal : </Text>
                         <Controller
                             control={control}
+                            rules={{required:true}}
                             name="isHalal"
                             render={({ field: { onChange, value } }) => (
                                 <View style={styles.optionContainer}>
@@ -335,6 +337,7 @@ export default  function Post(props: Props) {
                         <Text style={styles.optionTitle}> Vegetarian : </Text>
                         <Controller
                             control={control}
+                            rules={{required:true}}
                             name="isVeg"
                             render={({ field: { onChange, value } }) => (
                                 <View style={styles.optionContainer}>
@@ -364,6 +367,7 @@ export default  function Post(props: Props) {
                         <Text style={styles.optionTitle}> Contains Beef: </Text>
                         <Controller
                             control={control}
+                            rules={{required:true}}
                             name="isBeef"
                             render={({ field: { onChange, value } }) => (
                                 <View style={styles.optionContainer}>
