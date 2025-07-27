@@ -24,6 +24,7 @@ import RatingForm from "@/app/components/RatingForm";
 import {useGlobalContext} from "@/lib/global-provider";
 import {useFocusEffect} from '@react-navigation/native';
 import {red} from "react-native-reanimated/lib/typescript/Colors";
+import levelfix from "@/app/actions/levelfix";
 
 
 export default function Index() {
@@ -324,7 +325,7 @@ export default function Index() {
                                 <View style={styles.detailsContainer}>
                                     <View style={styles.titleRow}>
                                         <Text style={styles.cardTitle}>
-                                            {`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}
+                                            {`${selectedBuffet.locationname} Level ${levelfix(selectedBuffet.level)}`}
                                         </Text>
                                         {selectedBuffet.distance != null && (() => {
                                             return (
