@@ -3,11 +3,11 @@ import {
     Avatars,
     Account,
     Client,
-    OAuthProvider, Databases, Query, Storage, ID
+    OAuthProvider, Databases, Query, Storage, ID,
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
-import Buffet from "@/types";
+import {Buffet, Rating} from "@/types";
 
 export const config = {
     platform: 'com.roy.wasteless',
@@ -15,6 +15,8 @@ export const config = {
     projectID: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
     databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
     buffetcollectionID: process.env.EXPO_PUBLIC_APPWRITE_BUFFETS_COLLECTION_ID,
+    deletedBuffetcollectionID: process.env.EXPO_PUBLIC_APPWRITE_DELETEDBUFFETS_COLLECTION_ID,
+    ratingscollectionID: process.env.EXPO_PUBLIC_APPWRITE_RATINGS_COLLECTION_ID,
     bucketID: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID
 }
 
@@ -34,8 +36,7 @@ export const databases = new Databases(client)
 export const storage = new Storage(client)
 
 
-
-
+//user and auth functions
 export async function login() {
     try {
         const redirectUri = Linking.createURL("/(root)/(tabs)/profile")
@@ -96,6 +97,7 @@ export async function getCurrentUser() {
     }
 }
 
+//buffet functions
 export async function makeBuffet(newbuffet: Buffet) {
     try {
         const response = await databases.createDocument(
@@ -118,7 +120,11 @@ export async function makeBuffet(newbuffet: Buffet) {
             userID: response.userID,
             locationcoordslat: response.locationcoordslat,
             locationcoordslong: response.locationcoordslong,
-            photofileID: response.photofileID
+            photofileID: response.photofileID ,
+            userName: response.userName,
+            isHalal: response.isHalal,
+            isVeg: response.isVeg,
+            isBeef: response.isBeef,
 
             // nuslocation: response.nuslocation // Only if in your schema/interface
         };
@@ -136,7 +142,7 @@ export async function getLatestBuffets() {
             config.databaseId!,
             config.buffetcollectionID!,
             [Query.orderAsc('clearedby'),
-                Query.limit(20)]
+                Query.limit(30)]
         )
         return result.documents;
 
@@ -149,8 +155,22 @@ export async function getLatestBuffets() {
 export async function getUsersBuffets(userID) {
     try {
         const result = await databases.listDocuments(
-            config.databaseId,
-            config.buffetcollectionID,
+            config.databaseId!,
+            config.buffetcollectionID!,
+            [Query.equal('userID', userID)]
+        );
+        return result.documents;
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
+export async function getUsersDeletedBuffets(userID) {
+    try {
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.deletedBuffetcollectionID!,
             [Query.equal('userID', userID)]
         );
         return result.documents;
@@ -214,21 +234,88 @@ export async function updateFullBuffet (buffet, buffetID) {
     }
 }
 
-//mini to make it less inefficient
+//ratings functions
 
-export async function getFileMini(fileID)  {
+export async function makeRating(newrating: Rating) {
     try {
-        const result = await storage.getFilePreview(
-            config.bucketID,
-            fileID
-        )
-        console.log("result:", result);
+        const response = await databases.createDocument(
+            config.databaseId!,
+            config.ratingscollectionID!,
+            ID.unique(),
+            newrating
+        );
 
-        return result;
+        const rating = response.rating;
+
+        return rating;
+
     } catch(error) {
         console.error(error);
     }
 }
+
+export async function getBuffetRating(buffetID: string) {
+    try {
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.ratingscollectionID!,
+            [
+                Query.equal('buffetID', buffetID)
+            ]
+        );
+
+        return result.documents;
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+export async function checkUserRating(userID, buffetID) {
+    try {
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.ratingscollectionID!,
+            [
+                Query.and([
+                    Query.equal('userID', userID),
+                    Query.equal('buffetID', buffetID)
+                ])
+            ]
+            );
+
+        return result.documents
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+// Get the current user's name
+export async function getUserName(userId) {
+    try {
+        const user = await account.get();  // This fetches the logged-in user
+        return user.name || user.email || 'Anonymous';
+    } catch (error) {
+        console.error("Error fetching user name:", error);
+        return 'Anonymous';
+    }
+}
+
+export async function postRating(newRating) {
+    try {
+        const response = await databases.createDocument(
+            config.databaseId!,
+            config.ratingscollectionID!,
+            ID.unique(),
+            newRating  // This now includes userName
+        );
+
+        return response;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
 
 
 

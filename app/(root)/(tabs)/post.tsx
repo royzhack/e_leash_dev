@@ -11,7 +11,7 @@ import {
     Image,
     StyleSheet,
     Alert,
-    Platform
+    Platform, ActivityIndicator
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Soup } from 'lucide-react-native';
@@ -28,7 +28,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useNavigation } from '@react-navigation/native';       // ADDED: navigation hook
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
-import {uploadfile} from "@/lib/appwrite";
+import {getUserName, uploadfile} from "@/lib/appwrite";
 
 
 
@@ -67,7 +67,7 @@ function timecheck(value, timediffMins: number): boolean {
 }
 
 
-export default function Post(props: Props) {
+export default  function Post(props: Props) {
     const navigation = useNavigation();                     // ADDED: get navigation instance
     const user = useGlobalContext().user;
     const { control, handleSubmit, formState: { errors, isSubmitSuccessful }, reset } = useForm({
@@ -79,6 +79,9 @@ export default function Post(props: Props) {
             additionaldetails: ''
         }
     });
+
+    //loading
+    const [submitting, isSubmitting] = useState(false);
 
     // Photo state
     const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -94,6 +97,14 @@ export default function Post(props: Props) {
             reset(); setPhotos([]); setShowTimePicker(false); setIsCameraOpen(false);
         }
     }, [isSubmitSuccessful, reset]);
+
+    if (submitting) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color="#007AFF" />
+            </View>
+        );
+    }
 
     const onSubmit = async data => {
         if (!data.location) { Alert.alert('Validation', 'Please select a location'); return; }
@@ -119,6 +130,7 @@ export default function Post(props: Props) {
         }
 
         try {
+            isSubmitting(true);
             await postPhoto(photos);
             await postBuffet(
                 data.level,
@@ -129,8 +141,14 @@ export default function Post(props: Props) {
                 user?.$id,
                 coords,
                 placeName,
-                photofileID
+                photofileID,
+                user?.name,
+                data.isHalal,
+                data.isVeg,
+                data.isBeef,
             );
+            isSubmitting(false);
+
             Alert.alert('Success', 'Buffet posted successfully.');
             navigation.navigate('index');
             // ADDED: go to Home screen
@@ -250,7 +268,14 @@ export default function Post(props: Props) {
                                 <TouchableOpacity style={styles.selector} onPress={() => setShowTimePicker(true)}>
                                     <Text style={styles.selectorText}>{value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                                 </TouchableOpacity>
-                                {showTimePicker && <DateTimePicker value={value} mode="time" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, date) => { setShowTimePicker(false); date && onChange(date); }} />}
+                                {showTimePicker && <DateTimePicker
+                                    value={value}
+                                    mode="time"
+                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                    textColor={theme.primary}
+                                    onChange={(_, date) =>
+                                    { setShowTimePicker(false); date && onChange(date); }} />}
+
                             </>
                         )}
                     />
@@ -270,6 +295,101 @@ export default function Post(props: Props) {
                             </View>
                         )}
                     />
+                </View>
+
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionHeaderText}>Dietary Restrictions</Text>
+
+                    {/* Halal Option */}
+                    <View style={styles.optionSection}>
+                        <Text style={styles.optionTitle}>Halal : </Text>
+                        <Controller
+                            control={control}
+                            name="isHalal"
+                            render={({ field: { onChange, value } }) => (
+                                <View style={styles.optionContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === true && styles.selectedButton, // Apply selectedButton style for 'Yes'
+                                        ]}
+                                        onPress={() => onChange(true)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === true && styles.selectedButtonText]}>Yes</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === false && styles.selectedButton, // Apply selectedButton style for 'No'
+                                        ]}
+                                        onPress={() => onChange(false)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === false && styles.selectedButtonText]}>No</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        />
+                    </View>
+                    {/* Veg Option */}
+                    <View style={styles.optionSection}>
+                        <Text style={styles.optionTitle}> Vegetarian : </Text>
+                        <Controller
+                            control={control}
+                            name="isVeg"
+                            render={({ field: { onChange, value } }) => (
+                                <View style={styles.optionContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === true && styles.selectedButton, // Apply selectedButton style for 'Yes'
+                                        ]}
+                                        onPress={() => onChange(true)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === true && styles.selectedButtonText]}>Yes</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === false && styles.selectedButton, // Apply selectedButton style for 'No'
+                                        ]}
+                                        onPress={() => onChange(false)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === false && styles.selectedButtonText]}>No</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        />
+                    </View>
+                    <View style={styles.optionSection}>
+                        <Text style={styles.optionTitle}> Contains Beef: </Text>
+                        <Controller
+                            control={control}
+                            name="isBeef"
+                            render={({ field: { onChange, value } }) => (
+                                <View style={styles.optionContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === true && styles.selectedButton, // Apply selectedButton style for 'Yes'
+                                        ]}
+                                        onPress={() => onChange(true)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === true && styles.selectedButtonText]}>Yes</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.optionButton,
+                                            value === false && styles.selectedButton, // Apply selectedButton style for 'No'
+                                        ]}
+                                        onPress={() => onChange(false)}
+                                    >
+                                        <Text style={[styles.optionButtonText, value === false && styles.selectedButtonText]}>No</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        />
+                    </View>
+
                 </View>
 
                 {/* Additional Details */}
@@ -392,10 +512,10 @@ const styles = StyleSheet.create({
         padding: 10,
         backgroundColor: theme.surface,
         margin: 12,
-        color: theme.surface,
+        color: theme.primary,
     },
     selectorText: {
-        color: theme.textPrimary,
+        color: theme.primary,
     },
     sliderContainer: {
         flexDirection: 'row',
@@ -417,6 +537,45 @@ const styles = StyleSheet.create({
         textAlignVertical: 'top',
         backgroundColor: theme.surface,
         margin: 12,
+        color: theme.textPrimary,
+    },
+
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+    optionSection: {
+        flexDirection: 'row', // Aligns the text and buttons horizontally
+        alignItems: 'center', // Centers the content vertically within the container
+        marginTop: 4,
+        marginLeft : 4,
+    },
+    optionTitle: {
+        fontSize: 16,
+        marginBottom: 8,
+    },
+    optionContainer: {
+        flexDirection: 'row',
+        marginBottom: 12,
+    },
+    optionButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderRadius: 20,
+        marginRight: 10,
+        borderColor: theme.primary,
+        backgroundColor: 'transparent',
+    },
+    selectedButton: {
+        backgroundColor: theme.primary,
         color: theme.surface,
+
+    },
+    selectedButtonText: {
+        fontSize: 16,
+        color: theme.surface,
+    },
+    optionButtonText: {
+        fontSize: 16,
+        color: '#0061FF',
     },
 });

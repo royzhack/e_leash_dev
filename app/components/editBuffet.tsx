@@ -17,10 +17,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { Soup } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
-import { AntDesign } from '@expo/vector-icons';
-import Camera from './camera';
-import { postBuffet, supplementPhoto } from './buffetActions';
-
 import locations from '../../assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
 import geojsonData from '../../assets/NUSLocations/map.json';
@@ -28,9 +24,9 @@ import { Client, ID, Storage } from 'react-native-appwrite';
 import * as FileSystem from 'expo-file-system';
 import { updateFullBuffet, uploadfile } from '../../lib/appwrite';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { timecheck } from './timefunctions';
+import { timecheck } from '../actions/timefunctions';
 import Buffet from '../../types';
-import Index from '../(root)/(tabs)/index';
+import Index from '../(root)/(tabs)';
 import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router";
 
@@ -38,8 +34,16 @@ import { useRouter } from "expo-router";
 
 // Theme colors
 const theme = {
-    primary: '#0061FF',
-    overlay: 'rgba(37,99,235,0.3)',
+    primary: '#0061FF',           // main action color (blue)
+    secondary: '#0061FF',         // secondary accent (green)
+    accent: '#0061FF',            // tertiary accent (amber)
+    background: '#FFFFFF',        // light grey background
+    surface: '#FFFFFF',           // card backgrounds, surfaces
+    overlay: 'rgba(0,0,0,0.1)',   // translucent overlay (subtle grey)
+    error: '#FF0000',             // error text and alerts
+    textPrimary: '#212529',       // dark primary text
+    textSecondary: '#FFFFFF',     // secondary text (muted)
+    refreshTint: '#007AFF'        // pull-to-refresh indicator
 };
 
 // Level options
@@ -321,27 +325,39 @@ export default function EditBuffet() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' },
+    container: {
+        flex: 1,
+        backgroundColor: '#F2F5FA' ,
+    },
     topBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
     },
-    title: { fontSize: 20, fontWeight: 'bold' },
-    scrollContent: { padding: 16, paddingBottom: 40 },
+    title: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: theme.textPrimary,
+    },
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 40,
+    },
     sectionContainer: {
         marginBottom: 20,
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
         borderRadius: 8,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: theme.primary,
     },
     sectionHeaderText: {
         padding: 12,
         fontSize: 16,
         fontWeight: '600',
         backgroundColor: theme.primary,
-        color: '#fff',
+        color: theme.surface,
     },
     dropdown: {
         borderWidth: 1,
@@ -349,19 +365,38 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         paddingHorizontal: 10,
         paddingVertical: 8,
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
         margin: 12,
-        color: theme.primary,
+        color: theme.surface,
     },
-    errorText: { color: 'red', marginHorizontal: 12, marginBottom: 8 },
-    photoScroll: { alignItems: 'center', padding: 12, backgroundColor: theme.overlay },
-    thumbnailWrapper: { position: 'relative', marginRight: 12 },
-    thumbnail: { width: 80, height: 80, borderRadius: 6 },
+    errorText: {
+        color: theme.error,
+        marginHorizontal: 12,
+        marginBottom: 8,
+    },
+    photoScroll: {
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: theme.surface,
+        color: theme.surface,
+    },
+    thumbnailWrapper: {
+        position: 'relative',
+        marginRight: 12,
+        backgroundColor : theme.surface,
+        color : theme.surface,
+    },
+    thumbnail: {
+        width: 80,
+        height: 80,
+        borderRadius: 6,
+        backgroundColor : theme.primary,
+    },
     removeButton: {
         position: 'absolute',
         top: -6,
         right: -6,
-        backgroundColor: theme.primary,
+        backgroundColor: theme.secondary,
         borderRadius: 12,
         padding: 2,
     },
@@ -370,37 +405,50 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: theme.primary,
+        borderColor: theme.accent,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.background,
+        marginRight: 12,
     },
-    addText: { fontSize: 10, color: theme.primary, marginTop: 4, textAlign: 'center' },
+    addText: {
+        fontSize: 10,
+        color: theme.accent,
+        marginTop: 4,
+        textAlign: 'center',
+    },
     selector: {
         borderWidth: 1,
-        borderColor: theme.primary,
+        borderColor: theme.accent,
         borderRadius: 6,
         padding: 10,
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
         margin: 12,
+        color: theme.primary,
     },
-    selectorText: { color: theme.primary },
+    selectorText: {
+        color: theme.primary,
+    },
     sliderContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
+        color: theme.surface,
     },
-    sliderValue: { marginLeft: 12, color: theme.primary },
+    sliderValue: {
+        marginLeft: 12,
+        color: theme.secondary,
+    },
     textInput: {
         borderWidth: 1,
-        borderColor: theme.primary,
+        borderColor: theme.secondary,
         borderRadius: 6,
         padding: 10,
         minHeight: 80,
         textAlignVertical: 'top',
-        backgroundColor: theme.overlay,
+        backgroundColor: theme.surface,
         margin: 12,
-        color: theme.primary,
+        color: theme.textPrimary,
     },
 });

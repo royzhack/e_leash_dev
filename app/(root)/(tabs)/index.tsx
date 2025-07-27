@@ -11,13 +11,19 @@ import {
     TouchableOpacity,
     Image,
     RefreshControl,
+    Alert
 } from 'react-native';
+import halal from '@/constants/images'
 import * as Location from 'expo-location';
-import { getLatestBuffets } from '@/lib/appwrite';
+import {checkUserRating, getBuffetRating, getLatestBuffets , getUserName , postRating} from '@/lib/appwrite';
 import { Buffet, UserLocation } from '../../../types';
 import calculateDistance from '@/app/actions/locationfunctions';
 import {Soup} from "lucide-react-native";
+import RatingForm from "@/app/components/RatingForm";
+//import {postRating} from "@/app/actions/ratingsActions";
+import {useGlobalContext} from "@/lib/global-provider";
 import {useFocusEffect} from '@react-navigation/native';
+import {red} from "react-native-reanimated/lib/typescript/Colors";
 
 
 export default function Index() {
@@ -28,6 +34,10 @@ export default function Index() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedBuffet, setSelectedBuffet] = useState<Buffet | null>(null);
     const [refreshing, setRefreshing] = useState(false); // ← ADDED: pull-to-refresh state
+    const {user} = useGlobalContext()
+    const [buffetRatings, setBuffetRatings] = useState([]);
+    const [ratingsLoading, setRatingsLoading] = useState(false);
+
 
     // Fetch data
     const fetchBuffets = useCallback(async () => {
@@ -100,10 +110,21 @@ export default function Index() {
         return location;
     }
 
-    const openModal = (b: Buffet) => {
+
+
+    const openModal = async (b: Buffet) => {
         setSelectedBuffet(b);
         setModalVisible(true);
+        setRatingsLoading(true);
+        try {
+            const results = await getBuffetRating(b.$id); // make sure getBuffetRating returns a promise that resolves to your rating array
+            setBuffetRatings(results);
+        } catch (error) {
+            setBuffetRatings([]); // fallback
+        }
+        setRatingsLoading(false);
     };
+
 
     //  Close modal
 
@@ -119,6 +140,54 @@ export default function Index() {
             </View>
         );
     }
+
+
+    //ratingfunctions
+    async function handleRatingSubmit({ rating, comment, buffetID }) {
+        try {
+            setLoading(true);
+            {/*} const check = await checkUserRating(user?.$id, buffetID)
+        if (check.length > 0) {
+            Alert.alert("Cannot post another rating", "You can only post one rating per buffet");
+            return;
+        } */}
+
+            // Fetch the current user's username
+            const userName = await getUserName(user.$id);  // Assuming user.$id is available
+
+            // Construct the newRating object
+            const newRating = {
+                rating: rating,
+                comments: comment,
+                buffetID: buffetID,
+                userID: user.$id,   // Store the userID
+                userName: userName   // Store the userName
+            };
+
+            // Submit the rating and add the userName
+            await postRating(newRating);
+
+            Alert.alert("Thank you!", 'Your rating has been posted successfully');
+
+            // Refresh the buffet ratings after posting
+            if (selectedBuffet) {
+                setRatingsLoading(true);
+                const results = await getBuffetRating(selectedBuffet.$id);
+                setBuffetRatings(results);
+                setRatingsLoading(false);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const averageRating = buffetRatings.length
+        ? buffetRatings.reduce((acc, item) => acc + item.rating, 0) / buffetRatings.length
+        : 0;
+
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -149,6 +218,7 @@ export default function Index() {
                         >
                             <View style={styles.titleRow}>
                                 <Text style={styles.cardTitle}>{item.locationname}</Text>
+
                                 {item.distance != null && (
                                     <Text style={styles.distanceTitle}>
                                         | {(item.distance / 1000).toFixed(1)} km
@@ -156,16 +226,15 @@ export default function Index() {
                                 )}
                             </View>
 
+
+
                             {index === 0 && (
                                 <Text style={styles.nearestSmallLine}>*Nearest buffet</Text>
                             )}
 
-                            {item.restricted && (
-                                <Text style={styles.restricted}>Restricted Access</Text>
-                            )}
 
                             <View style={styles.progressRow}>
-                                <Text style={styles.amountLabel}>Amount left:</Text>
+                                <Text style={styles.amountLabel}>Amount left :</Text>
                                 <View style={styles.progressBar}>
                                     <View
                                         style={[
@@ -177,16 +246,45 @@ export default function Index() {
                                 </View>
                             </View>
 
-                            {diffMins > 0 && diffMins < 20 && (
-                                <Text style={styles.clearingText}>
-                                    *Clearing in {diffMins} min
-                                </Text>
-                            )}
-                            {diffMins <= 0 && (
-                                <Text style={styles.clearingText}>
-                                    *Cleared {Math.abs(diffMins)} min ago
-                                </Text>
-                            )}
+
+
+                            <View style={styles.container2}>
+                                {/* Display clearing text based on diffMins */}
+                                {diffMins > 20 && (
+                                    <Text style={[styles.clearingText, { color: theme.primary }]}>
+                                        *Clearing in {diffMins} min
+                                    </Text>
+                                )}
+                                {(diffMins > 0 && diffMins <= 20) && (
+                                    <Text style={[styles.clearingText, { color: '#E53935' }]}>
+                                        *Clearing in {diffMins} min
+                                    </Text>
+                                )}
+                                {diffMins <= 0 && (
+                                    <Text style={styles.clearingText}>
+                                        *Cleared {Math.abs(diffMins)} min ago
+                                    </Text>
+                                )}
+
+                                {/* Leaf Emoji positioned at bottom right if item.isVeg is true */}
+                                {item.isVeg && (
+                                    <Text style={styles.leafEmoji}>🥬</Text>
+                                )}
+                                {item.isHalal && (
+                                    <Image
+                                        source= {require('../../../assets/images/Halal.png')} // Path to the local image file
+                                        style={styles.halalImage}
+                                    />
+                                )}
+                                {!item.isBeef && (
+                                    <Image
+                                        source= {require('../../../assets/images/nobeef.jpg')} // Path to the local image file
+                                        style={[styles.halalImage , {right: 55}]}
+                                    />
+                                )}
+
+                            </View>
+
                         </TouchableOpacity>
                     );
                 }}
@@ -200,13 +298,13 @@ export default function Index() {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
+                        <Text style={[styles.modalTitle , {color: '#0061FF' } ]}>Buffet Details</Text>
                         <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                             <Text style={styles.closeX}>✕</Text>
                         </TouchableOpacity>
 
                         {selectedBuffet && (
                             <ScrollView contentContainerStyle={styles.modalScroll}>
-                                <Text style={styles.modalTitle}>Buffet Details</Text>
                                 <ScrollView
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
@@ -225,29 +323,28 @@ export default function Index() {
 
                                 <View style={styles.detailsContainer}>
                                     <View style={styles.titleRow}>
-                                        <Text style={styles.cardTitle}>{`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}</Text>
-                                        <Text style={styles.distanceTitle}>
-                                            | {(selectedBuffet.distance / 1000).toFixed(1)} km
+                                        <Text style={styles.cardTitle}>
+                                            {`${selectedBuffet.locationname} Level ${selectedBuffet.level}`}
                                         </Text>
+                                        {selectedBuffet.distance != null && (() => {
+                                            return (
+                                                <Text style={styles.distanceTitle}>
+                                                    | {(selectedBuffet.distance < 1000
+                                                    ? `${selectedBuffet.distance} m`
+                                                    : `${(selectedBuffet.distance / 1000).toFixed(1)} km`)}
+                                                </Text>
+                                            );
+                                        })()}
                                     </View>
 
-                                    <Text style={styles.nearestSmallLine}>
+                                    <Text style={[styles.nearestSmallLine, {marginTop: 0} ]}>
                                         {`*${selectedBuffet.locationdetails}`}
                                     </Text>
 
-                                    <Text style={styles.amountLabel}>
-                                        {`Buffet was posted at ${new Date(selectedBuffet.$createdAt).toLocaleString('en-SG', {
-                                            timeStyle: 'short',
-                                        })}`}
-                                    </Text>
 
-                                    <Text style={styles.amountLabel}>
-                                        {`Buffet will be cleared by ${new Date(selectedBuffet.clearedby).toLocaleString('en-SG', {
-                                            timeStyle: 'short',
-                                        })}`}
-                                    </Text>
+
                                     <View style={styles.progressRow}>
-                                        <Text style={styles.amountLabel}>Amount left:</Text>
+                                        <Text style={[styles.amountLabel  ,{fontSize: 16}]}>Amount left :</Text>
                                         <View style={styles.progressBar}>
                                             <View
                                                 style={[
@@ -255,8 +352,104 @@ export default function Index() {
                                                     { width: `${selectedBuffet.leftover}%` },
                                                 ]}
                                             />
-                                            <Text style={styles.progressText}>{selectedBuffet.leftover}%</Text>
+                                            <Text style={[styles.progressText]}>
+                                                {selectedBuffet.leftover}%
+                                            </Text>
                                         </View>
+                                    </View>
+
+
+
+                                    <View style={styles.amountLabel}>
+                                        <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16}]}>Additional Details :</Text>
+                                        <Text style={styles.distanceTitle}>
+                                            {selectedBuffet.additionaldetails
+                                                ? selectedBuffet.additionaldetails
+                                                : 'No additional details provided.'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.amountLabel}>
+                                        <Text style={[styles.amountLabel, { marginTop: 10, fontSize: 16 }]}>Dietary Restrictions :</Text>
+
+                                        <Text style={styles.distanceTitle}>
+                                            {
+                                                // Construct the message based on the conditions for Veg, Beef, and Halal options
+                                                `${selectedBuffet.isVeg ? 'Veg options available' : ''}`
+                                                + `${selectedBuffet.isBeef === false ? ', No beef' : ''}`
+                                                + `${selectedBuffet.isHalal ? ', Halal' : ''}`
+                                                || 'No additional details provided.'
+                                            }
+                                        </Text>
+                                    </View>
+
+                                    <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16}]}>
+                                        {`Cleared by :  ${new Date(
+                                            selectedBuffet.clearedby
+                                        ).toLocaleTimeString('en-SG', { timeStyle: 'short' })}`}
+                                    </Text> {/* change to some red text later */}
+                                    <View style={styles.titleRow}>
+                                        <Text style={[styles.amountLabel,{marginTop : 10 , fontSize: 16 , color: '#007AFF' , marginRight: 0 }]}>
+                                             {selectedBuffet.userName}
+                                        </Text>
+                                        {selectedBuffet && (() => {
+                                            const now = new Date();
+                                            const createdAt = new Date(selectedBuffet.$createdAt);
+                                            const diffMins = Math.round((now - createdAt) / 60000);
+                                            return (
+                                                <Text style={[styles.distanceTitle, {marginTop: 8} , {marginLeft: 3} ]}>
+                                                    {`| ${diffMins} min ago`}
+                                                </Text>
+                                            );
+                                        })()}
+                                    </View>
+
+
+
+                                    {/* Ratings section */}
+                                    <View style={styles.ratingsSection}>
+                                        <RatingForm
+                                            buffetID={selectedBuffet.$id}
+                                            onSubmit={handleRatingSubmit}
+                                        />
+
+
+                                        <Text style={styles.sectionHeader}>
+                                            {averageRating ? `Ratings: ${averageRating.toFixed(1
+                                            )} / 5` : 'No ratings yet'}
+                                        </Text>
+
+                                        {selectedBuffet && (
+                                        <FlatList
+                                            data={buffetRatings}
+                                            refreshing={ratingsLoading}
+                                            onRefresh={() => openModal(selectedBuffet)}
+                                            keyExtractor={(_, idx) => idx.toString()}
+                                            ListEmptyComponent={() => (
+                                                <Text style={styles.noRatingsText}>
+                                                    No ratings yet. Be the first to rate!
+                                                </Text>
+                                            )}
+                                            renderItem={({ item }) => {
+                                                const now = new Date();
+                                                const createdAt = new Date(item.$createdAt);
+                                                const diffMins2 = Math.round((now - createdAt) / 60000); // Time difference in minutes
+
+                                                return (
+                                                    <View style={styles.ratingItem}>
+                                                        <View style={styles.starsContainer}>
+                                                            <Text style={styles.userName}>{item.userName}</Text>
+                                                            <Text style={styles.ratingStars}>
+                                                                {'⭐'.repeat(item.rating)}
+                                                            </Text>
+                                                            <Text style={[styles.distanceTitle,{marginLeft: 3}] }>{`| ${diffMins2} min ago`}</Text>
+                                                        </View>
+                                                            <Text style={styles.ratingComment}>{item.comments}</Text>
+
+                                                    </View>
+                                                );
+                                            }}
+
+                                        />)}
                                     </View>
                                 </View>
                             </ScrollView>
@@ -264,6 +457,7 @@ export default function Index() {
                     </View>
                 </View>
             </Modal>
+
         </SafeAreaView>
     );}
 
@@ -280,6 +474,13 @@ export default function Index() {
     refreshTint: '#007AFF'        // pull-to-refresh indicator
 };
 const styles = StyleSheet.create({
+    leafEmoji: {
+        fontSize: 14, // Size of the emoji
+        position: 'absolute', // Position it at the top right
+        right: 0, // Align to the right
+        top: 0, // Align to the top
+        paddingTop: 4, // Add some space from the right edge if needed
+    },
     topBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -287,6 +488,16 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     container: { flex: 1, backgroundColor: '#F2F5FA' },
+    container2: {
+        flex: 1,
+        position: 'relative', // Ensure that the leaf emoji can be positioned absolutely inside the container
+    },
+    halalImage: {
+        position: 'absolute', // Positioning the image absolutely inside the container
+        bottom: 1, // Position the image near the bottom
+        right: 27, // Position the image near the left
+        width: 20, // Adjust size of the image
+        height: 20, },// Adjust size of the image
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     card: {
         backgroundColor: '#FFFFFF',
@@ -300,21 +511,81 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 2,
     },
+    starsContainer: {
+        flexDirection: 'row',
+        marginBottom: 0,
+    },
+    ratingStars: {
+        fontSize: 20,
+        marginTop : 5
+
+    },
+    userName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 3,
+        marginRight : 3,
+    },
+    commentContainer: {
+        backgroundColor: '#f9f9f9',
+        padding: 8,
+        borderRadius: 6,
+        marginTop: 5,
+    },
+    ratingComment: {
+        fontSize: 14,
+        color: '#555'},
     title: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#0061FF',
     },
-    titleRow: { flexDirection: 'row', alignItems: 'center' },
+    sectionHeader: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: theme.primary,
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    ratingsSection: {
+        marginTop: 16,
+    },
+    noRatingsText: {
+        fontStyle: 'italic',
+        color: theme.textSecondary,
+        textAlign: 'center',
+        marginVertical: 12,
+    },
+    ratingItem: {
+        paddingVertical: 6,
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEE',
+    },
+    ratingStars: {
+        fontSize: 16,
+        color: '#FFD700',
+    },
+    ratingComment: {
+        marginTop: 4,
+        fontSize: 14,
+        color: theme.textPrimary,
+    },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        position: 'relative', // To allow absolute positioning inside this container
+    },
+
     cardTitle: { fontSize: 18, fontWeight: '700', color: '#007AFF' },
     distanceTitle: { fontSize: 14, color: '#666', marginLeft: 8 },
-    nearestSmallLine: { fontSize: 12, color: '#007AFF', fontWeight: '600', marginTop: 4 },
+    nearestSmallLine: { fontSize: 14, color: '#007AFF', fontWeight: '600', marginTop: 4 },
     restricted: { marginTop: 6, color: '#E53935', fontWeight: '600' },
     progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
     amountLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginRight: 8 },
     progressBar: {
         flex: 1,
-        height: 10,
+        height: 17,
         backgroundColor: '#E5E5EA',
         borderRadius: 5,
         overflow: 'hidden',
@@ -326,10 +597,10 @@ const styles = StyleSheet.create({
     progressText: {
         position: 'absolute',
         alignSelf: 'center',
-        top: -2,
+        top: 0,
         fontSize: 12,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: '#000',
     },
     clearingText: {
         marginTop: 8,
@@ -355,7 +626,8 @@ const styles = StyleSheet.create({
         top: 12,
         right: 12,
         zIndex: 2,
-        color: theme.primary,
+        color: '#0061FF',
+        marginTop : 5,
     },
     closeX: {
         fontSize: 20,
@@ -370,6 +642,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: theme.textPrimary,
         marginBottom: 12,
+        textAlign: 'center',
     },
     imageScroll: {
         marginBottom: 16,
