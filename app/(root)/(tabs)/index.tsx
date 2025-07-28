@@ -26,6 +26,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import levelfix from "@/app/actions/levelfix";
 import useUserLocation from "@/app/actions/userLocation";
 
+
 export default function Index() {
     const userLocation = useUserLocation();
     const [rawBuffets, setRawBuffets] = useState<Buffet[]>([]);
@@ -125,11 +126,11 @@ export default function Index() {
     async function handleRatingSubmit({ rating, comment, buffetID }) {
         try {
             setLoading(true);
-            {/*} const check = await checkUserRating(user?.$id, buffetID)
-        if (check.length > 0) {
-            Alert.alert("Cannot post another rating", "You can only post one rating per buffet");
+             const check = await checkUserRating(user?.$id, buffetID)
+        if (check.length > 1) {
+            Alert.alert("Cannot post another rating", "You can only post 2 ratings per buffet");
             return;
-        } */}
+        }
 
             // Fetch the current user's username
             const userName = await getUserName(user.$id);  // Assuming user.$id is available

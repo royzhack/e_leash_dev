@@ -365,8 +365,9 @@ export default function Profile() {
                                     </Text>
                                     {/* Additional buffet details */}
                                     <Text style={styles.amountLabel}>
-                                        {`Buffet was ${new Date(item.clearedby).toLocaleString('en-SG', {
+                                        {`Buffet was cleared at ${new Date(item.clearedby).toLocaleString('en-SG', {
                                             timeStyle: 'short',
+                                            dateStyle: 'short'
                                         })}`}
                                     </Text>
                                 </View>

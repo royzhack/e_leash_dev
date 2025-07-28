@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import * as SplashScreen from 'expo-splash-screen';
 import { View, Text } from 'react-native';
 import "./globals.css";
+import { LogBox } from 'react-native';
+
+LogBox.ignoreAllLogs(); // Disables all log notifications
 
 import GlobalProvider from "@/lib/global-provider";
 
