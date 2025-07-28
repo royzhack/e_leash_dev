@@ -1,52 +1,52 @@
-Welcome to NUS WasteLess, made by E_Leash Dev!
+Absolutely! Here’s a more user-friendly version with added clarity, step-by-step guidance, and a direct link to download Android Studio (which includes the Android Emulator).
 
-# Welcome to your Expo app 👋
+# How to Run the NUS Wasteless Android App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+You can try out our app in two easy ways:
 
-## Get started
+- **Method 1:** Scan the QR code on your Android device to install and run the app instantly.
+- **Method 2:** [Download the APK file](https://expo.dev/accounts/naa-siuuuu-ff/projects/NUS_Wasteless/builds/6832af72-3b06-44bf-ae11-21616be2010a) and run it on your computer using the Android Emulator.
 
-1. Install dependencies
+## Using the Android Emulator (Step-by-Step Guide)
 
-   ```bash
-   npm install
-   ```
+The Android Emulator lets you try Android apps on your computer. Here’s how to get started:
 
-2. Start the app
+### 1. Download Android Studio (includes the Emulator)
 
-   ```bash
-   npx expo start
-   ```
+- Go to the [official Android Studio download page](https://developer.android.com/studio).
+- Choose the installer for your operating system (Windows, Mac, or Linux) and download it.
 
-In the output, you'll find options to open the app in a
+### 2. Install Android Studio
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Open the downloaded installer and follow the setup steps.
+- When prompted, leave the default options selected. This ensures all required tools (including the Android Emulator and SDK) are installed.
+- If you’re on a Mac or Linux, you may be asked to set up some environment variables. The [official installation guide](https://developer.android.com/studio/install) has everything you need.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 3. Set Up the Android Emulator
 
-## Get a fresh project
+- Launch **Android Studio**.
+- Click **"Tools"** in the top menu, then select **"Device Manager"** (it might be called **"AVD Manager"** on some versions).
+- Click **"Create Device"**.
+- Choose a device profile (e.g., Pixel 4), and click **"Next"**.
+- Select a system image (such as a recommended Android version), then click **"Download"** if needed.
+- Click **"Finish"** to create the emulator.
+- In **Device Manager**, click the **“Play”** (green triangle) button to start the emulator.
 
-When you're ready, run:
+### 4. Run the App in the Emulator
 
-```bash
-npm run reset-project
-```
+- Download the APK file using [this link](https://expo.dev/accounts/naa-siuuuu-ff/projects/NUS_Wasteless/builds/6832af72-3b06-44bf-ae11-21616be2010a) if you haven't already.
+- Drag and drop the APK onto the running emulator window, or use the “Install APK” option in Device Manager.
+- The app will install and appear on the emulator, ready to use!
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Helpful Tips
 
-## Learn more
+- **Performance:** For a smooth experience, it’s best to have at least **8–16 GB of RAM** on your computer.
+- **All-in-one Download:** The [Android Studio download](https://developer.android.com/studio) includes everything you need.
+- **Need help?** If you have issues or want more info about setting up, the [official docs](https://developer.android.com/studio) cover troubleshooting and environment variables.
+- **Advanced users:** It’s possible to use the emulator without Android Studio, but using Studio is much simpler and recommended for most people.
 
-To learn more about developing your project with Expo, look at the following resources:
+Save this as NUS_Wasteless_Installation.md (or any name you like) — and you’re all set!
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Let me know if you want a downloadable .md file as well!
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Sources
