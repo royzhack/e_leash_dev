@@ -15,6 +15,9 @@ export default interface Buffet {
     distance?: number
     userName: string
     rating?: number
+    isVeg?: boolean
+    isHalal?: boolean
+    isBeef?: boolean
 }
 
 export type Rating = {

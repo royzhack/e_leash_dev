@@ -25,10 +25,10 @@ import locations from '@/assets/NUSLocations/locations';
 import { Dropdown } from 'react-native-element-dropdown';
 import geojsonData from '@/assets/NUSLocations/map.json';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useNavigation } from '@react-navigation/native';       // ADDED: navigation hook
 // Appwrite SDK imports
 import { Client, ID, Storage } from 'react-native-appwrite';
 import {getUserName, uploadfile} from "@/lib/appwrite";
+import { router } from 'expo-router';
 
 
 
@@ -68,7 +68,6 @@ function timecheck(value, timediffMins: number): boolean {
 
 
 export default  function Post(props: Props) {
-    const navigation = useNavigation();                     // ADDED: get navigation instance
     const user = useGlobalContext().user;
     const { control, handleSubmit, formState: { errors, isSubmitSuccessful }, reset } = useForm({
         defaultValues: {
@@ -76,7 +75,10 @@ export default  function Post(props: Props) {
             level: LEVELS[4].value,
             clearedby: new Date(),
             leftover: 0,
-            additionaldetails: ''
+            additionaldetails: '',
+            isHalal: false,
+            isVeg: false,
+            isBeef: true
         }
     });
 
@@ -95,6 +97,7 @@ export default  function Post(props: Props) {
     useEffect(() => {
         if (isSubmitSuccessful) {
             reset(); setPhotos([]); setShowTimePicker(false); setIsCameraOpen(false);
+            router.push('/');
         }
     }, [isSubmitSuccessful, reset]);
 
@@ -109,7 +112,6 @@ export default  function Post(props: Props) {
     const onSubmit = async data => {
         if (!data.location) { Alert.alert('Validation', 'Please select a location'); return; }
         if (photos.length === 0) { Alert.alert('Validation', 'Please take at least one photo'); return; }
-        if (!data.isBeef || !data.isHalal || !data.isVeg) {Alert.alert('Validation', 'Please input the dietary restrictions'); return; }
 
         // Lookup coords & name
         const feature = locationfind(data.location);
@@ -150,9 +152,7 @@ export default  function Post(props: Props) {
             );
             isSubmitting(false);
 
-            Alert.alert('Success', 'Buffet posted successfully.');
-            navigation.navigate('index');
-            // ADDED: go to Home screen
+            Alert.alert('Success', 'Buffet posted successfully.', 'OK');
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Failed to upload and post buffet.');
@@ -306,7 +306,6 @@ export default  function Post(props: Props) {
                         <Text style={styles.optionTitle}>Halal : </Text>
                         <Controller
                             control={control}
-                            rules={{required:true}}
                             name="isHalal"
                             render={({ field: { onChange, value } }) => (
                                 <View style={styles.optionContainer}>
@@ -337,7 +336,6 @@ export default  function Post(props: Props) {
                         <Text style={styles.optionTitle}> Vegetarian : </Text>
                         <Controller
                             control={control}
-                            rules={{required:true}}
                             name="isVeg"
                             render={({ field: { onChange, value } }) => (
                                 <View style={styles.optionContainer}>
@@ -367,7 +365,6 @@ export default  function Post(props: Props) {
                         <Text style={styles.optionTitle}> Contains Beef: </Text>
                         <Controller
                             control={control}
-                            rules={{required:true}}
                             name="isBeef"
                             render={({ field: { onChange, value } }) => (
                                 <View style={styles.optionContainer}>
@@ -409,7 +406,9 @@ export default  function Post(props: Props) {
                 </View>
 
                 {/* Submit Button */}
-                <Button title="Submit Buffet" onPress={handleSubmit(onSubmit)} color={theme.primary} />
+                <View className="pb-20">
+                    <Button title="Submit Buffet" onPress={handleSubmit(onSubmit)} color={theme.primary} />
+                </View>
             </KeyboardAwareScrollView>
         </SafeAreaView>
     );

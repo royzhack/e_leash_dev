@@ -23,9 +23,8 @@ import RatingForm from "@/app/components/RatingForm";
 //import {postRating} from "@/app/actions/ratingsActions";
 import {useGlobalContext} from "@/lib/global-provider";
 import {useFocusEffect} from '@react-navigation/native';
-import {red} from "react-native-reanimated/lib/typescript/Colors";
 import levelfix from "@/app/actions/levelfix";
-
+import useUserLocation from "@/app/actions/userLocation";
 
 export default function Index() {
     const userLocation = useUserLocation();
@@ -38,6 +37,7 @@ export default function Index() {
     const {user} = useGlobalContext()
     const [buffetRatings, setBuffetRatings] = useState([]);
     const [ratingsLoading, setRatingsLoading] = useState(false);
+
 
 
     // Fetch data
@@ -87,29 +87,7 @@ export default function Index() {
         setBuffets(withDistance);
     }, [userLocation, rawBuffets]);
 
-    function useUserLocation(): UserLocation | null {
-        const [location, setLocation] = useState<UserLocation | null>(null);
-        useEffect(() => {
-            let sub: Location.LocationSubscription;
-            (async () => {
-                const { status } = await Location.requestForegroundPermissionsAsync();
-                if (status !== 'granted') {
-                    console.warn('Location permission denied');
-                    return;
-                }
-                sub = await Location.watchPositionAsync(
-                    { accuracy: Location.Accuracy.High, distanceInterval: 5 },
-                    loc =>
-                        setLocation({
-                            latitude: loc.coords.latitude,
-                            longitude: loc.coords.longitude,
-                        })
-                );
-            })();
-            return () => sub?.remove();
-        }, []);
-        return location;
-    }
+
 
 
 
@@ -199,7 +177,7 @@ export default function Index() {
             <FlatList
                 data={buffets}
                 keyExtractor={item => item.$id}
-                contentContainerStyle={{ paddingVertical: 12 }}
+                contentContainerStyle={{ paddingVertical: 12, minHeight: 800 }}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
@@ -226,8 +204,6 @@ export default function Index() {
                                     </Text>
                                 )}
                             </View>
-
-
 
                             {index === 0 && (
                                 <Text style={styles.nearestSmallLine}>*Nearest buffet</Text>
@@ -461,6 +437,7 @@ export default function Index() {
 
         </SafeAreaView>
     );}
+
 
     const theme = {
     primary: '#0061FF',           // main action color (blue)

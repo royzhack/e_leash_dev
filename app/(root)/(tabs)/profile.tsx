@@ -63,7 +63,7 @@ export default function Profile() {
         try {
             const docs = await getUsersBuffets(userID);
             setUsersBuffets(docs);
-            console.log("docs", docs);
+            //console.log("docs", docs);
             //next, add average ratings to the buffets
             const ratedBuffets = await Promise.all(docs.map(async x => {
                 const ratings = await getBuffetaverageRating(x.$id);

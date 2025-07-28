@@ -7,6 +7,7 @@ import {
 } from "react-native-appwrite" //add databases
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
+import { makeRedirectUri } from 'expo-auth-session';
 import {Buffet, Rating} from "@/types";
 
 export const config = {
@@ -39,7 +40,10 @@ export const storage = new Storage(client)
 //user and auth functions
 export async function login() {
     try {
-        const redirectUri = Linking.createURL("/(root)/(tabs)/profile")
+        const redirectUri =  `appwrite-callback-${process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID}://project-callback`;
+
+
+        console.log("Redirect URI:", redirectUri);
         const response = await account.createOAuth2Token(
             OAuthProvider.Google,
             redirectUri
@@ -54,8 +58,11 @@ export async function login() {
             throw new Error("Create OAuth2 token failed");
 
         const url = new URL(browserResult.url);
+        console.log("URL", url);
         const secret = url.searchParams.get("secret")?.toString();
+        console.log("Secretlog", secret);
         const userId = url.searchParams.get("userId")?.toString();
+        console.log("UserID", userId);
         if (!secret || !userId) throw new Error("Create OAuth2 token failed");
 
         const session = await account.createSession(userId, secret);
