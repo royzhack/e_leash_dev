@@ -5,7 +5,6 @@ import { useGlobalContext } from '@/lib/global-provider';
 import { postBuffet, supplementPhoto } from '@/app/actions/buffetActions';
 import { uploadfile } from '@/lib/appwrite';
 
-// --- Mocks for external modules/dependencies ---
 jest.mock('@/lib/global-provider', () => ({
     useGlobalContext: jest.fn(),
 }));
@@ -39,7 +38,7 @@ jest.mock('expo-router', () => ({
     },
 }));
 
-// --- Main Test Suite ---
+
 describe('Post Component', () => {
     beforeEach(() => {
         useGlobalContext.mockReturnValue({ user: { $id: 'user1', name: 'TestUser' } });
