@@ -21,6 +21,6 @@ export default function AppLayout() {
     if (!isLoggedIn) {
         return <Redirect href="/sign-in" />;
     }
-
+    console.log('loading', loading, 'isLoggedIn', isLoggedIn)
     return <Slot />; //this refers to the current screen we wanna show, be it profile, home etc.
 }

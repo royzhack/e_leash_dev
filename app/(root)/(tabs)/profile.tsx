@@ -63,7 +63,7 @@ export default function Profile() {
         try {
             const docs = await getUsersBuffets(userID);
             setUsersBuffets(docs);
-            console.log("docs", docs);
+            //console.log("docs", docs);
             //next, add average ratings to the buffets
             const ratedBuffets = await Promise.all(docs.map(async x => {
                 const ratings = await getBuffetaverageRating(x.$id);
@@ -365,8 +365,9 @@ export default function Profile() {
                                     </Text>
                                     {/* Additional buffet details */}
                                     <Text style={styles.amountLabel}>
-                                        {`Buffet was ${new Date(item.clearedby).toLocaleString('en-SG', {
+                                        {`Buffet was cleared at ${new Date(item.clearedby).toLocaleString('en-SG', {
                                             timeStyle: 'short',
+                                            dateStyle: 'short'
                                         })}`}
                                     </Text>
                                 </View>
