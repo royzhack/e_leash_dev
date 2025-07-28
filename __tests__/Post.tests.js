@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import Post from '../Post';
+import Post from '../app/(root)/(tabs)/post';
 import { useGlobalContext } from '@/lib/global-provider';
 import { postBuffet, supplementPhoto } from '@/app/actions/buffetActions';
 import { uploadfile } from '@/lib/appwrite';
@@ -19,17 +19,20 @@ jest.mock('@/lib/appwrite', () => ({
 jest.mock('@expo/vector-icons', () => ({
     AntDesign: () => null,
 }));
-jest.mock('@/app/actions/camera', () => ({
-    __esModule: true,
-    default: (props) => {
-        // Simulate taking a photo and closing the modal
-        React.useEffect(() => {
-            props.onPhotoTaken({ uri: 'mockUri' });
-            props.onClose();
-        }, []);
-        return null;
-    }
-}));
+jest.mock('@/app/actions/camera', () => {
+    const React = require('react');
+    return {
+        __esModule: true,
+        default: (props) => {
+            React.useEffect(() => {
+                props.onPhotoTaken({ uri: 'mockUri' });
+                props.onClose();
+            }, []);
+            return null;
+        }
+    };
+});
+
 jest.mock('expo-router', () => ({
     router: {
         push: jest.fn(),
@@ -79,14 +82,4 @@ describe('Post Component', () => {
         });
     });
 
-    it('submits form successfully with valid data', async () => {
-        // This test skeleton checks that required async submission functions are called.
-        // To fully implement, set all required form values using fireEvent & simulate photo upload.
-        const { getByText } = render(<Post />);
-        // Manual filling logic would go here—for demonstration only.
-        // fireEvent.changeText(...), fireEvent.press(...) etc.
-        // After valid fill, then:
-        // fireEvent.press(getByText('Submit Buffet'));
-        // await waitFor(() => expect(postBuffet).toHaveBeenCalled());
-    });
 });
